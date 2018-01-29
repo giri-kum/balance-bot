@@ -254,24 +254,28 @@ void position_controller(mb_state_t* mb_state, mb_setpoints_t* mb_setpoints)
     float error_position;
     int position_true = 0;
     error_position = mb_setpoints->distance;
-    if(error_position < -9 || error_position > 9)
+    if(competition!=1)
     {
-        mb_setpoints->fwd_velocity = 0.4 * PID_Compute(position_pid, error_position, position_true);
+        if(error_position < -9.5 || error_position > 9.5)
+        {
+            mb_setpoints->fwd_velocity = 0.7 * PID_Compute(position_pid, error_position, position_true);
+        }
+        else if (error_position < -9.0 || error_position > 9.0)
+        {
+            mb_setpoints->fwd_velocity = 0.9 * PID_Compute(position_pid, error_position, position_true);
+        }
+        else if (error_position < -0.3||error_position > 0.3)
+        {
+            mb_setpoints->fwd_velocity = PID_Compute(position_pid, error_position, position_true);
+        }
+        
+        else
+        {
+            mb_setpoints->fwd_velocity = 0.5* PID_Compute(position_pid, error_position, position_true);
+        }
     }
-    else if (error_position < -8 || error_position > 8)
-    {
-        mb_setpoints->fwd_velocity = 0.7 * PID_Compute(position_pid, error_position, position_true);
-    }
-    else if (error_position < -0.3||error_position > 0.3)
-    {
-        mb_setpoints->fwd_velocity = PID_Compute(position_pid, error_position, position_true);
-    }
-    
     else
-    {
-        mb_setpoints->fwd_velocity = 0.5* PID_Compute(position_pid, error_position, position_true);
-    }
-    
+        mb_setpoints->fwd_velocity = PID_Compute(position_pid, error_position, position_true);
     mb_state->position_pid_p = mb_setpoints->fwd_velocity;
     mb_state->error_position = error_position;
 }
