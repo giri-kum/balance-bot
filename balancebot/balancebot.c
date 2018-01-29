@@ -101,7 +101,7 @@ int main(){
 	rc_set_imu_interrupt_func(&balancebot_controller);
 
 
-
+    printf("setpoints %f, %f, %f\n", mb_setpoints.position[0],mb_setpoints.position[1],mb_setpoints.heading);
 	printf("we are running!!!...\n");
 	// done initializing so set state to RUNNING
 	rc_set_state(RUNNING); 
@@ -229,9 +229,7 @@ void* setpoint_control_loop(void* ptr){
 				}
 			else{ //Autonomous mode: set points are controlled by the code, it is zero for the time being.
 				mb_setpoints.manual_ctl = 0;
-				mb_setpoints.position[0]=0;
-				mb_setpoints.position[1]=0;
-				mb_setpoints.heading=0;
+				mb_load_setpoint_config();
 				}
 	 	}
 	 	else
@@ -432,4 +430,23 @@ void* printf_loop(void* ptr){
 float wrap_angle(float value)
 {
 	return value>0? (value):(value + TWO_PI);
+}
+
+int mb_load_setpoint_config(){
+    FILE* file = fopen("setpoints.cfg", "r");
+    if (file == NULL){
+        printf("Error opening setpoints.cfg\n");
+    }
+				
+    //TODO: You can add to or modify the cfg file as you like
+    // This is here as an example
+    fscanf(file, "%f %f %f ", 
+        &mb_setpoints.position[0],
+        &mb_setpoints.position[1],
+        &mb_setpoints.heading
+        );
+
+    fclose(file);
+   
+    return 0;
 }

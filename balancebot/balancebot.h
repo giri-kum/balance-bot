@@ -53,5 +53,5 @@ void optitrack_message_handler(const lcm_recv_buf_t* rbuf,
                                const balancebot_msg_t* msg,
                                void* userdata);
 
-
+int mb_load_setpoint_config();
 #endif
