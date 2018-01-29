@@ -29,7 +29,8 @@ PID_t *in_pid;
 PID_t *out_pid;
 PID_t *turn_pid;
 
-
+int sensor_scheme;
+float gyrodometry_threshold;
 float out_FilterHz;
 float turn_FilterHz;
 rc_filter_t out_Filter;

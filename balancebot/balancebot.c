@@ -124,7 +124,7 @@ int main(){
 *
 *******************************************************************************/
 void balancebot_controller(){
-
+	
 	//lock state mutex
 	pthread_mutex_lock(&state_mutex);
 	// Read IMU
@@ -132,25 +132,32 @@ void balancebot_controller(){
 	// wrap angle
 	mb_state.alpha = wrap_angle(mb_state.alpha);
 	mb_state.imu_theta = wrap_angle(imu_data.dmp_TaitBryan[TB_YAW_Z]);
-	mb_state.imu_thetadot = (mb_state.imu_theta-prev_imu_theta)*SAMPLE_RATE_HZ;
+
+	mb_state.imu_deltheta = (mb_state.imu_theta-prev_imu_theta);
 	prev_imu_theta = mb_state.imu_theta;
-	if(mb_state.imu_thetadot>6*SAMPLE_RATE_HZ || mb_state.imu_thetadot<-6*SAMPLE_RATE_HZ)
-		mb_state.imu_thetadot = 0;
+	
+	if(mb_state.imu_deltheta>6 || mb_state.imu_deltheta<-6)
+		mb_state.imu_deltheta = 0;
+	if(mb_state.thetadot>6*SAMPLE_RATE_HZ || mb_state.thetadot<-6*SAMPLE_RATE_HZ)
+		mb_state.thetadot = 0;
 	fprintf(f, "%lf,", mb_state.alpha);
 	fprintf(f, "%lf,", mb_state.imu_theta);
-	fprintf(f, "%lf,", mb_state.odometry_theta);
+	fprintf(f, "%lf,", mb_state.theta);
 	fprintf(f, "%lf,", mb_state.xdot);
-	fprintf(f, "%lf,", mb_state.imu_thetadot);
-	fprintf(f, "%lf,", mb_state.odometry_thetadot);
-	fprintf(f, "%lf,", mb_state.in_pid_d);
-	fprintf(f, "%lf,", mb_state.out_pid_d);
-	fprintf(f, "%lf\n", mb_state.turn_pid_d);
+	fprintf(f, "%lf,", mb_state.thetadot);
+	fprintf(f, "%lf,", mb_state.imu_deltheta);
+	fprintf(f, "%lf,", mb_state.odometry_deltheta);
+	fprintf(f, "%lf\n", mb_odometry.final_deltheta);
+			
+	//fprintf(f, "%lf,", mb_state.in_pid_d);
+	//fprintf(f, "%lf,", mb_state.out_pid_d);
+	//fprintf(f, "%lf\n", mb_state.turn_pid_d);
 	// Read encoders
 	mb_state.left_encoder = ENC_1_POL * rc_get_encoder_pos(1);
     mb_state.right_encoder = ENC_2_POL * rc_get_encoder_pos(2);
 
     // Update odometry 
-    mb_update_odometry(&mb_odometry, &mb_state);
+    mb_update_odometry(&mb_odometry, &mb_state, sensor_scheme);
 
     // Calculate controller outputs
     mb_controller_update(&mb_state,&mb_setpoints);
@@ -335,8 +342,11 @@ void* printf_loop(void* ptr){
 			fprintf(f1, "%lf,", mb_state.turn_pid_p);
 			fprintf(f1, "%lf,", mb_state.turn_pid_i);
 			fprintf(f1, "%lf,", mb_state.turn_pid_d);
-			fprintf(f1, "%lf,", mb_state.imu_thetadot);
-			fprintf(f1, "%lf\n", mb_state.odometry_thetadot);
+			fprintf(f1, "%lf,", mb_state.imu_deltheta);
+			fprintf(f1, "%lf,", mb_state.odometry_deltheta);
+			fprintf(f1, "%lf,", mb_odometry.final_deltheta);
+			fprintf(f1, "%lf\n", mb_state.thetadot);
+			
 
 		}
 		usleep(1000000 / PRINTF_HZ);

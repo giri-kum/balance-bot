@@ -6,10 +6,14 @@ struct mb_state{
     // raw sensor inputs
     float   alpha;             // body angle (rad)
     float   imu_theta;             // heading  (rad)
-    float   odometry_theta;             // heading  (rad)
+    //float   odometry_theta;             // heading  (rad)
+    float   theta;
     int     left_encoder;      // left encoder counts since last reading
     int     right_encoder;     // right encoder counts since last reading
+    float   thetadot;           
+    float   xdot;
 
+    int     sensor_scheme;
     //outputs
     float   left_cmd;  //left wheel command [-1..1]
     float   right_cmd; //right wheel command [-1..1]
@@ -26,9 +30,8 @@ struct mb_state{
     float   out_pid_d;
     float   turn_pid_d;
     float   error;
-    float   xdot;
-    float   imu_thetadot;
-    float   odometry_thetadot;
+    float   imu_deltheta;
+    float   odometry_deltheta;
     float   desired_alpha;
     float   equilibrium_point;
     int   count; //Sprite: added count for running outer-loop at a slower rate
@@ -51,7 +54,7 @@ struct mb_odometry{
     float theta;    //orientation from initialization in rad
     float del_x;
     float del_y;
-    float del_theta;
+    float final_deltheta;
 };
 
 #endif

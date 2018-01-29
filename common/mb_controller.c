@@ -57,7 +57,6 @@ int mb_load_controller_config(){
 
     //TODO: You can add to or modify the cfg file as you like
     // This is here as an example
-
     fscanf(file, "%f %f %f %f", 
         &in_pid_params.kp,
         &in_pid_params.ki,
@@ -87,6 +86,8 @@ int mb_load_controller_config(){
     fscanf(file, "%f",&out_FilterHz);
     fscanf(file, "%f",&turn_FilterHz);
     fscanf(file, "%d",&outerloop_rate);
+    fscanf(file, "%d",&sensor_scheme);
+    fscanf(file, "%f",&gyrodometry_threshold);
     fclose(file);
 
     // Sprite: for debugging purposes
@@ -99,6 +100,8 @@ int mb_load_controller_config(){
     printf("out_FilterHz =  %f\n", out_FilterHz);
     printf("turn_FilterHz =  %f\n", turn_FilterHz);
     printf("outerloop_rate =  %f\n", SAMPLE_RATE_HZ / (float) outerloop_rate);
+    printf("sensor_scheme =  %d\n", sensor_scheme);
+    printf("gyrodometry_threshold =  %f\n", gyrodometry_threshold);
     return 0;
 }
 
@@ -126,7 +129,7 @@ int mb_controller_update(mb_state_t* mb_state, mb_setpoints_t* mb_setpoints){
     turn_true = 0;
     // Sprite: Compute error for the outer loop
     error_out = mb_setpoints->fwd_velocity - mb_state->xdot;
-    error_turn = mb_setpoints->turn_velocity - mb_state->imu_thetadot;
+    error_turn = mb_setpoints->turn_velocity - mb_state->thetadot;
     error_out = rc_march_filter(&(out_Filter), error_out); 
     error_turn = rc_march_filter(&(turn_Filter), error_turn); 
 
