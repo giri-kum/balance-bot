@@ -30,7 +30,7 @@
 #define CPR                     979.2 // Sprite: counts per revolution = 20.4*48
 #define WHEEL_DIAMETER          0.08 // diameter of wheel in meters
 #define WHEEL_BASE              0.2  // wheel separation distance in meters
-#define FWD_VEL_SENSITIVITY     0.5   // sensitivity of RC control for moving
+#define FWD_VEL_SENSITIVITY     0.75   // sensitivity of RC control for moving
 #define TURN_VEL_SENSITIVITY    5   // sensitivity of RC control for turning
 #define SAMPLE_RATE_HZ          100   // main filter and control loop speed
 #define DT                      0.01  // 1/sample_rate

@@ -22,12 +22,11 @@ int mb_initialize_controller(){
     states = 2;
     waypoint_number = 0;
     sign = 1.0;
+    PID_SetOutputLimits(position_pid, -0.7, 0.7);
+    PID_SetOutputLimits(heading_pid, -1.5, 1.5);
     
     PID_SetOutputLimits(out_pid, -PI, PI);
     PID_SetIntegralLimits(out_pid, -PI/10, PI/10);
-
-    PID_SetOutputLimits(position_pid, -0.5, 0.5);
-    PID_SetOutputLimits(heading_pid, -1.5, 1.5);
 
     PID_SetOutputLimits(turn_pid, -PI/6, PI/6);
     PID_SetIntegralLimits(turn_pid, -PI/10, PI/10);
@@ -223,6 +222,7 @@ int get_rtr_state(mb_state_t* mb_state, mb_setpoints_t* mb_setpoints)
         case 1: // from idle rotation 1 to translation state
                 {
                  position_controller(mb_state,mb_setpoints);
+                 //heading_controller(mb_state,mb_setpoints);
                  mb_setpoints->turn_velocity = 0;
                  if(mb_state->error_position < tolerance_position && mb_state->error_position > -tolerance_position)
                     return 2;
@@ -249,7 +249,15 @@ void position_controller(mb_state_t* mb_state, mb_setpoints_t* mb_setpoints)
     float error_position;
     int position_true = 0;
     error_position = mb_setpoints->distance;
-    mb_setpoints->fwd_velocity = PID_Compute(position_pid, error_position, position_true);
+    if (error_position < -0.3||error_position > 0.3)
+    {
+        mb_setpoints->fwd_velocity = PID_Compute(position_pid, error_position, position_true);
+    }
+    else
+    {
+        mb_setpoints->fwd_velocity = 0.5* PID_Compute(position_pid, error_position, position_true);
+    }
+    
     mb_state->position_pid_p = mb_setpoints->fwd_velocity;
     mb_state->error_position = error_position;
 }

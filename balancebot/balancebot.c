@@ -165,11 +165,11 @@ void balancebot_controller(){
 	fprintf(f, "%lf,", mb_state.alpha);
 	fprintf(f, "%lf,", mb_state.imu_theta);
 	fprintf(f, "%lf,", mb_state.theta);
-	fprintf(f, "%lf,", mb_state.xdot);
 	fprintf(f, "%lf,", mb_state.odometry_x);
 	fprintf(f, "%lf,", mb_state.odometry_y);
-	fprintf(f, "%d,", waypoint_number);
-	fprintf(f, "%d\n", states);
+	fprintf(f, "%lf,", mb_state.opti_x);
+	fprintf(f, "%lf,", mb_state.opti_y);
+	fprintf(f, "%lf\n", mb_state.opti_theta);
 			
 	//fprintf(f, "%lf,", mb_state.in_pid_d);
 	//fprintf(f, "%lf,", mb_state.out_pid_d);
@@ -336,9 +336,9 @@ void* printf_loop(void* ptr){
 			printf("    X    |");
 			printf("    Y    |");
 			printf("    θ    |");
-			printf("manualctl|");
-			printf("waypoint |");
-			printf(" opti_θ    |");
+			printf(" opti_x  |");
+			printf(" opti_y  |");
+			printf(" opti_θ  |");
 			printf("positionP|");
 			printf("heading_P|");
 			printf("error_P  |");
@@ -366,8 +366,8 @@ void* printf_loop(void* ptr){
 			printf("%7.3f  |", mb_odometry.x);
 			printf("%7.3f  |", mb_odometry.y);
 			printf("%7.3f  |", mb_odometry.theta);
-			printf("%7d  |", mb_setpoints.manual_ctl);
-			printf("%7d  |", waypoint_number);
+			printf("%7.3f  |", mb_state.opti_x);
+			printf("%7.3f  |", mb_state.opti_y);
 			printf("%7.3f  |", mb_state.opti_theta);
 
 			printf("%7.3f  |", mb_state.position_pid_p);
@@ -387,8 +387,8 @@ void* printf_loop(void* ptr){
 			fprintf(f1, "%lf,", mb_odometry.x);
 			fprintf(f1, "%lf,", mb_odometry.y);
 			fprintf(f1, "%lf,", mb_odometry.theta);
-			fprintf(f1, "%d,", mb_setpoints.manual_ctl);
-			fprintf(f1, "%d,", waypoint_number);
+			fprintf(f1, "%lf,", mb_state.opti_x);
+			fprintf(f1, "%lf,", mb_state.opti_y);
 			fprintf(f1, "%lf,", mb_state.opti_theta);
 			fprintf(f1, "%lf,", mb_state.position_pid_p);
 			fprintf(f1, "%lf,", mb_state.heading_pid_p);
