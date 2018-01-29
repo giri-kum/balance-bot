@@ -186,13 +186,11 @@ def downsample(rx,ry):
     rx_new.append(rx[1])
     ry_new.append(ry[1])
     for i in range(len(rx)-2):
-        if (abs(abs(math.tan(math.atan2((ry[i+1]-ry[i]),(rx[i+1]-rx[i])))) - abs(math.tan(math.atan2((ry[i]-ry[i-1]),(rx[i]-rx[i-1])))))) > 0.01 :
-            rx_new.append(rx[i])
-            ry_new.append(ry[i])
-            
-    
+            if (abs(abs(math.tan(math.atan2((ry[i+1]-ry[i]),(rx[i+1]-rx[i])))) - abs(math.tan(math.atan2((ry[i]-ry[i-1]),(rx[i]-rx[i-1])))))) > 0.01 :
+                rx_new.append(rx[i])
+                ry_new.append(ry[i])
     rx_new.append(rx[len(rx)-2])
-    ry_new.append(ry[len(ry)-2])
+    ry_new.append(ry[len(rx)-2])            
     rx_new.append(rx[len(rx)-1])
     ry_new.append(ry[len(rx)-1])
     return [rx_new, ry_new]
@@ -221,7 +219,7 @@ def main():
     rx , ry = [], []
     Way_position = []
     mid_points = []
-    Way_position.append([34,26])
+    Way_position.append([40,24])
     #########
     #Way_position = [[34,26],[45,35],[35,35],[25,45],[25,35],[15,15],[35,15]]
     #########
@@ -247,7 +245,7 @@ def main():
     # print(Way_position)
 
     #load robot size:
-    grid_size = 1.0  # [m]
+    grid_size = 2.0  # [m]
     robot_size = 4 # [m]
     gate_size = int(1)
     wall_width = int(1)
@@ -321,24 +319,33 @@ def main():
     rx[:] = [(x-30.0)*scale2world for x in rx]
     ry[:] = [(y-30.0)*scale2world for y in ry]
  
-    [rx_ne,ry_ne] = downsample(rx,ry)
-    [rx_new,ry_new] = downsample(rx_ne,ry_ne)
-    
+
+    [rx,ry] = downsample(rx,ry)
+    rx_new = []
+    ry_new = []
+    for i in range(len(rx)-2):
+            if(rx[i]!=rx[i+1] or ry[i]!=ry[i+1]):
+                rx_new.append(rx[i])
+                ry_new.append(ry[i])
+    rx_new.append(rx[len(rx)-1])
+    ry_new.append(ry[len(rx)-1])
+    [rx_new,ry_new] = downsample(rx_new,ry_new)
+
     n = len(rx_new)
     data = str(n) +  " 0.2 0.02 \n"
     for i in range(n):
         data = data + str(rx_new[i]) + " " + str(ry_new[i]) + " 0.0 \n"
 
 
-    file = open("setpoints.cfg","w")
+    file = open("setpoints4.cfg","w")
     file.write(data)
     file.close()
 
     if show_animation:
         plt.figure(2)
-        plt.subplot(311)
+        plt.subplot(211)
         plt.plot(rx, ry)
-        plt.subplot(312)
+        plt.subplot(212)
         plt.plot(rx_new,ry_new,'*')
         plt.show()
 
