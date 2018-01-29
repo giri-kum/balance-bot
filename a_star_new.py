@@ -199,157 +199,167 @@ def main():
 
     # start and goal position
     scale2world = 0.06
+    start_point = [40,24] #[30,30]
+    laps = [0,0]
+    for lap_number in range(2):
+        lap = laps[lap_number]
+        print(start_point)
+        way_point_space = 6
+        #gate_position = [[30,10],[10,20],[20,20],[30,20],[40,30],[40,40],[30,40],[20,40]]
+        gate_position = []
+        file = open("gates.dat", "r")
+        data = file.read()
+        gates = data.split("\n")
+        gate = [0,0,0,0]
+        for i in range(4):
+            temp = gates[i].split(",")
+            for j in range(4):
+                gate[j] = float(temp[j])
+            gate_position.append([gate[0],gate[1]])
+            gate_position.append([gate[2],gate[3]])
 
-    #gate_position = [[30,10],[10,20],[20,20],[30,20],[40,30],[40,40],[30,40],[20,40]]
-    gate_position = []
-    file = open("gates.dat", "r")
-    data = file.read()
-    gates = data.split("\n")
-    gate = [0,0,0,0]
-    for i in range(4):
-        temp = gates[i].split(",")
-        for j in range(4):
-            gate[j] = float(temp[j])
-        gate_position.append([gate[0],gate[1]])
-        gate_position.append([gate[2],gate[3]])
+        gate_position[:] = [[x[0]/scale2world + 30, x[1]/scale2world + 30] for x in gate_position]
+        # print(gate_position)
 
-    gate_position[:] = [[x[0]/scale2world + 30, x[1]/scale2world + 30] for x in gate_position]
-    # print(gate_position)
-
-    rx , ry = [], []
-    Way_position = []
-    mid_points = []
-    Way_position.append([40,24])
-    #########
-    #Way_position = [[34,26],[45,35],[35,35],[25,45],[25,35],[15,15],[35,15]]
-    #########
-    for i in range(4):
-        left_gate = gate_position[2*i]
-        right_gate = gate_position[2*i+1]
-        if np.absolute(left_gate[0] - right_gate[0]) < 2:
-            if left_gate[1] < right_gate[1]:
-                way_pos_start = [left_gate[0]+5,(left_gate[1]+right_gate[1])/2]
-                way_pos_goal = [left_gate[0]-5,(left_gate[1]+right_gate[1])/2]
+        rx , ry = [], []
+        Way_position = []
+        mid_points = []
+        Way_position.append(start_point)
+        #########
+        #Way_position = [[34,26],[45,35],[35,35],[25,45],[25,35],[15,15],[35,15]]
+        #########
+        for i in range(4):
+            left_gate = gate_position[2*i]
+            right_gate = gate_position[2*i+1]
+            if np.absolute(left_gate[0] - right_gate[0]) < 2:
+                if left_gate[1] < right_gate[1]:
+                    way_pos_start = [left_gate[0]+way_point_space,(left_gate[1]+right_gate[1])/2]
+                    way_pos_goal = [left_gate[0]-way_point_space,(left_gate[1]+right_gate[1])/2]
+                else:
+                    way_pos_start = [left_gate[0]-way_point_space,(left_gate[1]+right_gate[1])/2]
+                    way_pos_goal = [left_gate[0]+way_point_space,(left_gate[1]+right_gate[1])/2]
             else:
-                way_pos_start = [left_gate[0]-5,(left_gate[1]+right_gate[1])/2]
-                way_pos_goal = [left_gate[0]+5,(left_gate[1]+right_gate[1])/2]
+                if left_gate[0] < right_gate[0]:
+                    way_pos_start = [(left_gate[0]+right_gate[0])/2,left_gate[1]-5]
+                    way_pos_goal = [(left_gate[0]+right_gate[0])/2,left_gate[1]+5]
+                else:
+                    way_pos_start = [(left_gate[0]+right_gate[0])/2,left_gate[1]+5]
+                    way_pos_goal = [(left_gate[0]+right_gate[0])/2,left_gate[1]-5]
+            Way_position.append(way_pos_start)
+            Way_position.append(way_pos_goal)
+        # print(Way_position)
+
+        #load robot size:
+        grid_size = 2.0  # [m]
+        robot_size = 4 # [m]
+        gate_size = int(1)
+        wall_width = int(1)
+        wall_length = int(8)
+        ox, oy = [], []
+        idx = 0
+        for gate_pos in gate_position:
+            for i in range(0,gate_size):
+                for j in range(0,gate_size):
+                    ox.append(int(gate_pos[0])+i)
+                    oy.append(int(gate_pos[1])+j)
+
+        for i in range(60):
+            ox.append(i)
+            oy.append(0.0)
+        for i in range(60):
+            ox.append(60.0)
+            oy.append(i)
+        for i in range(61):
+            ox.append(i)
+            oy.append(60.0)
+        for i in range(61):
+            ox.append(0.0)
+            oy.append(i)
+
+            #laod colsed gates:
+        idx = len(ox)
+        if(lap == 0):
+            for i in range(4):
+                left_gate = gate_position[2*i]
+                right_gate = gate_position[2*i+1]
+                ox.append((left_gate[0]+right_gate[0])/2)
+                oy.append((left_gate[1]+right_gate[1])/2)
+                mid_points.append([(left_gate[0]+right_gate[0])/2,(left_gate[1]+right_gate[1])/2])
+            print(idx,len(ox))
+            print(mid_points)
+
+        for num_map in range(8):
+        #load points:
+            sx = Way_position[num_map][0]
+            sy = Way_position[num_map][1]
+            gx = Way_position[num_map+1][0]
+            gy = Way_position[num_map+1][1]
+            #print(sx,sy,gx,gy)
+            # print('remove_number',ox[idx])
+            #open the door for remove the obstacles:
+            if(lap==0):
+                print(num_map)
+                if num_map%2 != 0:
+                    print('before_reomve',[ox[idx],ox[idx]])
+                    ox.remove(ox[idx])
+                    oy.remove(oy[idx])
+                    # print('check_reomve',[ox[idx],ox[idx]])
+                # print(idx,len(ox))
+
+            #pathplaning for A*
+            if show_animation:
+                plt.plot(ox, oy, ".k")
+                plt.plot(sx, sy, "xr")
+                plt.plot(gx, gy, "xb")
+                plt.grid(True)
+                plt.axis("equal")
+            rx_temp, ry_temp = a_star_planning(sx, sy, gx, gy, ox, oy, grid_size, robot_size)
+            rx_temp.reverse()
+            ry_temp.reverse()
+            rx = rx + rx_temp
+            ry = ry + ry_temp
+
+
+
+        if(lap == 0):    
+            print('mid_points',mid_points)
+        rx[:] = [(x-30.0)*scale2world for x in rx]
+        ry[:] = [(y-30.0)*scale2world for y in ry]
+     
+
+        [rx,ry] = downsample(rx,ry)
+        rx_new = []
+        ry_new = []
+        for i in range(len(rx)-2):
+                if(rx[i]!=rx[i+1] or ry[i]!=ry[i+1]):
+                    rx_new.append(rx[i])
+                    ry_new.append(ry[i])
+        rx_new.append(rx[len(rx)-1])
+        ry_new.append(ry[len(rx)-1])
+        [rx_new,ry_new] = downsample(rx_new,ry_new)
+
+        n = len(rx_new)
+        data = str(n) +  " 0.2 0.02 \n"
+        for i in range(n):
+            data = data + str(rx_new[i]) + " " + str(ry_new[i]) + " 0.0 \n"
+
+        if(lap == 0):    
+            filename = "setpoints4.cfg"     
         else:
-            if left_gate[0] < right_gate[0]:
-                way_pos_start = [(left_gate[0]+right_gate[0])/2,left_gate[1]-5]
-                way_pos_goal = [(left_gate[0]+right_gate[0])/2,left_gate[1]+5]
-            else:
-                way_pos_start = [(left_gate[0]+right_gate[0])/2,left_gate[1]+5]
-                way_pos_goal = [(left_gate[0]+right_gate[0])/2,left_gate[1]-5]
-        Way_position.append(way_pos_start)
-        Way_position.append(way_pos_goal)
-    # print(Way_position)
+            filename = "setpoints5.cfg"     
+        file = open(filename,"w")
+        file.write(data)
+        file.close()
 
-    #load robot size:
-    grid_size = 2.0  # [m]
-    robot_size = 4 # [m]
-    gate_size = int(1)
-    wall_width = int(1)
-    wall_length = int(8)
-    ox, oy = [], []
-    idx = 0
-    for gate_pos in gate_position:
-        for i in range(0,gate_size):
-            for j in range(0,gate_size):
-                ox.append(int(gate_pos[0])+i)
-                oy.append(int(gate_pos[1])+j)
-
-    for i in range(60):
-        ox.append(i)
-        oy.append(0.0)
-    for i in range(60):
-        ox.append(60.0)
-        oy.append(i)
-    for i in range(61):
-        ox.append(i)
-        oy.append(60.0)
-    for i in range(61):
-        ox.append(0.0)
-        oy.append(i)
-
-        #laod colsed gates:
-    idx = len(ox)
-    for i in range(4):
-        left_gate = gate_position[2*i]
-        right_gate = gate_position[2*i+1]
-        ox.append((left_gate[0]+right_gate[0])/2)
-        oy.append((left_gate[1]+right_gate[1])/2)
-        mid_points.append([(left_gate[0]+right_gate[0])/2,(left_gate[1]+right_gate[1])/2])
-    print(idx,len(ox))
-    print(mid_points)
-
-    for num_map in range(8):
-    #load points:
-        sx = Way_position[num_map][0]
-        sy = Way_position[num_map][1]
-        gx = Way_position[num_map+1][0]
-        gy = Way_position[num_map+1][1]
-        #print(sx,sy,gx,gy)
-        # print('remove_number',ox[idx])
-        #open the door for remove the obstacles:
-        print(num_map)
-        if num_map%2 != 0:
-            print('before_reomve',[ox[idx],ox[idx]])
-            ox.remove(ox[idx])
-            oy.remove(oy[idx])
-            # print('check_reomve',[ox[idx],ox[idx]])
-        # print(idx,len(ox))
-
-        #pathplaning for A*
         if show_animation:
-            plt.plot(ox, oy, ".k")
-            plt.plot(sx, sy, "xr")
-            plt.plot(gx, gy, "xb")
-            plt.grid(True)
-            plt.axis("equal")
-        rx_temp, ry_temp = a_star_planning(sx, sy, gx, gy, ox, oy, grid_size, robot_size)
-        rx_temp.reverse()
-        ry_temp.reverse()
-        rx = rx + rx_temp
-        ry = ry + ry_temp
+            plt.figure(2)
+            plt.subplot(211)
+            plt.plot(rx, ry)
+            plt.subplot(212)
+            plt.plot(rx_new,ry_new,'*')
+            plt.show()
 
-
-
-
-    print('mid_points',mid_points)
-    rx[:] = [(x-30.0)*scale2world for x in rx]
-    ry[:] = [(y-30.0)*scale2world for y in ry]
- 
-
-    [rx,ry] = downsample(rx,ry)
-    rx_new = []
-    ry_new = []
-    for i in range(len(rx)-2):
-            if(rx[i]!=rx[i+1] or ry[i]!=ry[i+1]):
-                rx_new.append(rx[i])
-                ry_new.append(ry[i])
-    rx_new.append(rx[len(rx)-1])
-    ry_new.append(ry[len(rx)-1])
-    [rx_new,ry_new] = downsample(rx_new,ry_new)
-
-    n = len(rx_new)
-    data = str(n) +  " 0.2 0.02 \n"
-    for i in range(n):
-        data = data + str(rx_new[i]) + " " + str(ry_new[i]) + " 0.0 \n"
-
-
-    file = open("setpoints4.cfg","w")
-    file.write(data)
-    file.close()
-
-    if show_animation:
-        plt.figure(2)
-        plt.subplot(211)
-        plt.plot(rx, ry)
-        plt.subplot(212)
-        plt.plot(rx_new,ry_new,'*')
-        plt.show()
-
-
-
+        start_point = [rx[len(rx)-1]/scale2world+30,ry[len(ry)-1]/scale2world+30]
+        print(start_point)
 if __name__ == '__main__':
     main()

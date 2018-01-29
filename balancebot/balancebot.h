@@ -33,7 +33,7 @@ uint64_t current_time, start_time;
 FILE * f;
 FILE * f_gates;
 int opti_count; 
-
+int lap;
 //lcm variables
 lcm_t * lcm;
 

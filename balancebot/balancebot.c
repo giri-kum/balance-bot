@@ -16,6 +16,7 @@ int main(){
 	mb_setpoints.fwd_velocity = 0;
 	mb_setpoints.turn_velocity = 0;	
 	opti_count = 0;
+	lap = 0;
 	// always initialize cape library first
 	if(rc_initialize()){
 		fprintf(stderr,"ERROR: failed to initialize rc_initialize(), are you root?\n");
@@ -249,6 +250,11 @@ void* setpoint_control_loop(void* ptr){
 						{
 								if(opti_count == 25)	
 							{
+								if(lap == 0)
+									{
+										lap = 1;
+										mb_load_setpoint_config();
+									}
 								mb_initialize_odometry(&mb_odometry, mb_state.opti_x ,mb_state.opti_y,mb_state.opti_theta);
 								opti_count = 0;
 								waypoint_number = 0;
@@ -258,6 +264,11 @@ void* setpoint_control_loop(void* ptr){
 						}
 						else
 						{
+							if(lap == 0)
+							{
+								lap = 1;
+								mb_load_setpoint_config();
+							}
 							waypoint_number = 0;
 						}
 					}
@@ -459,7 +470,10 @@ int mb_load_setpoint_config()
 				}
 		case 4:
 				{
-				 fname = "setpoints4.cfg";
+					if(lap == 0)
+				 		fname = "setpoints4.cfg";
+				 	else
+				 		fname = "setpoints5.cfg";
 				 break;
 				}
 		default:{
