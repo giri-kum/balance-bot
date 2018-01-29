@@ -36,7 +36,7 @@
 #define DT                      0.01  // 1/sample_rate
 #define PRINTF_HZ               10    // rate of print loop
 #define RC_CTL_HZ               25    // rate of RC data update
-#define LCM_HZ                  1000    // rate of lcm handle thread
+#define LCM_HZ                  100    // rate of lcm handle thread
 #define OPTITRACK_CHANNEL       "OPTITRACK_CHANNEL"
 
 #endif

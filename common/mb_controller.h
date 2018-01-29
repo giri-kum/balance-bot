@@ -28,6 +28,10 @@ void intialize_queue(float value,float *filter_queue, int queue_length);
 float average_queue(float *filter_queue, int queue_length);
 void push_queue(float value,float *filter_queue, int queue_length);
 float median_queue(float *filter_queue, int queue_length);
+
+void heading_controller(mb_state_t* mb_state, mb_setpoints_t* mb_setpoints);
+void position_controller(mb_state_t* mb_state, mb_setpoints_t* mb_setpoints);
+void balance(mb_state_t* mb_state, float fwd_velocity, float turn_velocity);
 PID_t *in_pid;
 PID_t *out_pid;
 PID_t *turn_pid;
@@ -42,6 +46,13 @@ float turn_FilterHz;
 rc_filter_t out_Filter;
 rc_filter_t turn_Filter; 
   
+
+// State machine
+int states;
+//int get_robot_state(mb_state_t* mb_state, mb_setpoints_t* mb_setpoints);
+int get_rtr_state(mb_state_t* mb_state, mb_setpoints_t* mb_setpoints);
+//int get_waypoint_state(mb_state_t* mb_state, mb_setpoints_t* mb_setpoints);
+void statemachine(mb_state_t* mb_state, mb_setpoints_t* mb_setpoints);
 
 
 #endif

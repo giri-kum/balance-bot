@@ -56,10 +56,3 @@ void optitrack_message_handler(const lcm_recv_buf_t* rbuf,
 int mb_load_setpoint_config();
 #endif
 
-
-// State machine
-int states[3];
-int get_motor_state();
-int get_rtr_state();
-int get_waypoint_state();
-void statemachine();

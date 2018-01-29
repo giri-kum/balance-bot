@@ -19,7 +19,8 @@ int mb_initialize_controller(){
     turn_pid = PID_Init(turn_pid_params.kp, turn_pid_params.ki, turn_pid_params.kd, turn_pid_params.dFilterHz, SAMPLE_RATE_HZ);
     position_pid = PID_Init(position_pid_params.kp, position_pid_params.ki, position_pid_params.kd, position_pid_params.dFilterHz, SAMPLE_RATE_HZ);
     heading_pid = PID_Init(heading_pid_params.kp, heading_pid_params.ki, heading_pid_params.kd, heading_pid_params.dFilterHz, SAMPLE_RATE_HZ);
-
+    states = 2;
+    
     PID_SetOutputLimits(out_pid, -PI, PI);
     PID_SetIntegralLimits(out_pid, -PI/10, PI/10);
 
@@ -145,50 +146,101 @@ int mb_load_controller_config(){
 int mb_controller_update(mb_state_t* mb_state, mb_setpoints_t* mb_setpoints){
     //TODO: update your controller each timestep, called by 
     // the IMU interrupt function
-    // Sprite:added mb_setpoints as one of the argument, fwd_velocity
+    if(mb_setpoints->manual_ctl!=1) // autonomous control
+    {
+       statemachine(mb_state,mb_setpoints);
+    }
+    
+    balance(mb_state, mb_setpoints->fwd_velocity, mb_setpoints->turn_velocity);
+return 0; 
+}
 
-    // Sprite: initialize local variables
-    float error, error_out, error_turn, error_position, error_heading, output, desired_alpha, turn_output,left_u,right_u;
-    int in_true, out_true, turn_true,position_true,heading_true;
+void statemachine(mb_state_t* mb_state, mb_setpoints_t* mb_setpoints)
+{
+    if(states != 2)
+        states = get_rtr_state(mb_state,mb_setpoints);
+}
+
+int get_rtr_state(mb_state_t* mb_state, mb_setpoints_t* mb_setpoints)
+{
+    float tolerance_position = 0.1, tolerance_angle = 0.1;
+    mb_setpoints->heading = atan2((mb_setpoints->position[1]-mb_state->odometry_y),(mb_setpoints->position[0]-mb_state->odometry_x));
+    mb_setpoints->distance = sqrt(pow(mb_setpoints->position[0]-mb_state->odometry_x,2) + pow(mb_setpoints->position[1]-mb_state->odometry_y,2));
+    if(mb_setpoints->heading < 0)
+    {
+        mb_setpoints->heading = mb_setpoints->heading + PI;
+        mb_setpoints->distance = -1*mb_setpoints->distance;
+    }
+    
+    switch(states)
+    {
+        case 0: // from idle state to rotation 1 state
+                {
+                 heading_controller(mb_state,mb_setpoints);
+                 if(mb_state->error_heading < tolerance_angle)
+                    return 1;
+                 else
+                    return 0;
+                 } 
+        case 1: // from idle rotation 1 to translation state
+                {
+                 position_controller(mb_state,mb_setpoints);
+                 if(mb_state->error_position < tolerance_position)
+                    return 2;
+                 else
+                    return 1;
+                }
+        case 2: // from translation to rotation 2 state
+                {
+
+                return 0;
+                }
+        case 3: // from rotation 2 to idle state
+                {
+
+                return 0;
+                }
+        default: return 0;
+    }
+}
+
+
+void position_controller(mb_state_t* mb_state, mb_setpoints_t* mb_setpoints)
+{
+    float error_position;
+    int position_true = 0;
+    error_position = mb_setpoints->distance;
+//    if(error_position < 0.1)
+//        error_position = 0;
+    mb_setpoints->fwd_velocity = PID_Compute(position_pid, error_position, position_true);
+    mb_state->position_pid_p = mb_setpoints->fwd_velocity;
+    mb_state->error_position = error_position;
+}
+
+void heading_controller(mb_state_t* mb_state, mb_setpoints_t* mb_setpoints)
+{
+    float error_heading;
+    int heading_true = 0;
+    error_heading = mb_setpoints->heading - mb_state->theta;
+    error_heading = rc_march_filter(&heading_pid->dFilter, error_heading);
+//    if(error_heading < 0.1)
+//        error_heading = 0;
+    mb_setpoints->turn_velocity = PID_Compute(heading_pid, error_heading, heading_true);
+    mb_state->heading_pid_p = mb_setpoints->turn_velocity;
+    mb_state->error_heading = error_heading;
+}
+
+void balance(mb_state_t* mb_state, float fwd_velocity, float turn_velocity)
+{
+    float error, error_out, error_turn, output, desired_alpha, turn_output,left_u,right_u;
+    int in_true, out_true, turn_true;
     in_true = 1;
     out_true = 0;
     turn_true = 0;
-    position_true = 0;
-    heading_true = 0;
-    mb_state->theta_calc = atan2((mb_setpoints->position[1]-mb_state->odometry_y),(mb_setpoints->position[0]-mb_state->odometry_x));
-    error_position = sqrt(pow(mb_setpoints->position[0]-mb_state->odometry_x,2) + pow(mb_setpoints->position[1]-mb_state->odometry_y,2));
-    if(mb_state->theta_calc < 0)
-    {
-        mb_state->theta_calc = mb_state->theta_calc + PI;
-        error_position = -1*error_position;
-    }
-    error_heading = mb_state->theta_calc - mb_state->theta;
-    error_heading = rc_march_filter(&heading_pid->dFilter, error_heading);
-    if(error_heading < 0.1)
-        error_heading = 0;
-    if(error_position < 0.1)
-        error_position = 0;
-    // Sprite: Compute error for the outer loop
-    if(mb_setpoints->manual_ctl!=1)
-    {
-
-        mb_setpoints->fwd_velocity = PID_Compute(position_pid, error_position, position_true);
-        mb_setpoints->turn_velocity = PID_Compute(heading_pid, error_heading, heading_true);
-        mb_state->heading_pid_p = mb_setpoints->turn_velocity;
-        mb_state->position_pid_p = mb_setpoints->fwd_velocity;
-
-    }
-    error_out = mb_setpoints->fwd_velocity - mb_state->xdot;
-    error_turn = mb_setpoints->turn_velocity - mb_state->thetadot;
+    error_out = fwd_velocity - mb_state->xdot;
+    error_turn = turn_velocity - mb_state->thetadot;
     error_out = rc_march_filter(&(out_Filter), error_out); 
     error_turn = rc_march_filter(&(turn_Filter), error_turn); 
-
-    // Sprite: Added filter for error_out (moving average of 30), switched to low-pass filter
- //   push_queue(error_out,out_filter_queue,out_queue_length);
- //   error_out = average_queue(out_filter_queue,out_queue_length);
-
- //   push_queue(error_turn,turn_filter_queue,turn_queue_length);
- //   error_turn = average_queue(turn_filter_queue,turn_queue_length);
 
     // Sprite: Compute input (desired-alpha) for the inner loop
     desired_alpha = mb_state->equilibrium_point - PID_Compute(out_pid, error_out, in_true);
@@ -236,13 +288,10 @@ int mb_controller_update(mb_state_t* mb_state, mb_setpoints_t* mb_setpoints){
     mb_state->out_pid_d = out_pid->dTerm;
     mb_state->turn_pid_d = turn_pid->dTerm;
     mb_state->error = error;
-
-    mb_state->error_heading = error_heading;
-    mb_state->error_position = error_position;
-
-
-    return 0;
 }
+
+
+
 
 
 float compensate(float command)
@@ -268,6 +317,10 @@ else
     }
     return result;
 }
+
+
+
+
 
 /*******************************************************************************
 * int mb_destroy_controller()
