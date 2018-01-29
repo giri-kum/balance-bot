@@ -99,7 +99,7 @@ int mb_controller_update(mb_state_t* mb_state, mb_setpoints_t* mb_setpoints){
     // Sprite:added mb_setpoints as one of the argument, fwd_velocity
 
     // Sprite: initialize local variables
-    float error, error_out, error_turn, desired_alpha, output;
+    float error, error_out, error_turn, desired_alpha, output, turn_output,left_u,right_u;
     int in_true;
     in_true = 1;
     // Sprite: Compute error for the outer loop
@@ -121,17 +121,33 @@ int mb_controller_update(mb_state_t* mb_state, mb_setpoints_t* mb_setpoints){
 
     // Sprite: Compute PID output for the motor
     output = compensate(PID_Compute(in_pid, error, in_true));
-    mb_state->right_cmd = ((float) ENC_1_POL)*SPEED_RATIO*output+PID_Compute(turn_pid, error_turn, 0);
-    mb_state->left_cmd = ((float) ENC_2_POL)*output-PID_Compute(turn_pid, error_turn, 0);
+    turn_output = PID_Compute(turn_pid, error_turn, 0);
+ //   printf("turn_pid->dTerm = %lf and mb_state = %lf \n",turn_pid->dTerm,mb_state->turn_pid_d);
+    left_u = output+ turn_output;
+    right_u = output-turn_output;
+    if(left_u > 1)
+        left_u = 1.0;
+    else if(left_u < -1)
+        left_u = -1.0;
+    if(right_u > 1)
+        right_u = 1.0;
+    else if(right_u < -1)
+        right_u = -1.0;
+    
+    mb_state->right_cmd = ((float) ENC_1_POL)*right_u;
+    mb_state->left_cmd = ((float) ENC_2_POL)*left_u;
     
 
     // Sprite: for debugging purposes, PID terms for the inner loop
     mb_state->in_pid_p = in_pid->pTerm;
     mb_state->out_pid_p = out_pid->pTerm;
+    mb_state->turn_pid_p = turn_pid->pTerm;
     mb_state->in_pid_i = in_pid->iTerm;
     mb_state->out_pid_i = out_pid->iTerm;
+    mb_state->turn_pid_i = turn_pid->iTerm;
     mb_state->in_pid_d = in_pid->dTerm;
     mb_state->out_pid_d = out_pid->dTerm;
+    mb_state->turn_pid_d = turn_pid->dTerm;
     mb_state->error = error;
     mb_state->desired_alpha = desired_alpha;
     return 0;

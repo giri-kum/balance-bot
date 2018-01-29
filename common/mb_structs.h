@@ -17,10 +17,13 @@ struct mb_state{
     // Sprite: added for debugging purposes
     float   in_pid_p;
     float   out_pid_p;
+    float   turn_pid_p;
     float   in_pid_i;
     float   out_pid_i;
+    float   turn_pid_i;
     float   in_pid_d;
     float   out_pid_d;
+    float   turn_pid_d;
     float   error;
     float   xdot;
     float   thetadot;

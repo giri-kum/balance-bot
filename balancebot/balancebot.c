@@ -130,8 +130,12 @@ void balancebot_controller(){
 	mb_state.alpha = wrap_angle(mb_state.alpha);
 	mb_state.theta = imu_data.dmp_TaitBryan[TB_YAW_Z];
 	fprintf(f, "%lf,", mb_state.alpha);
+	fprintf(f, "%lf,", mb_state.theta);
+	fprintf(f, "%lf,", mb_state.xdot);
+	fprintf(f, "%lf,", mb_state.thetadot);
 	fprintf(f, "%lf,", mb_state.in_pid_d);
-	fprintf(f, "%lf\n", mb_state.out_pid_d);
+	fprintf(f, "%lf,", mb_state.out_pid_d);
+	fprintf(f, "%lf\n", mb_state.turn_pid_d);
 	// Read encoders
 	mb_state.left_encoder = ENC_1_POL * rc_get_encoder_pos(1);
     mb_state.right_encoder = ENC_2_POL * rc_get_encoder_pos(2);
@@ -247,7 +251,7 @@ void* printf_loop(void* ptr){
 			printf("  in_I   |");
 			printf("  out_I  |");
 			printf("  in_D   |");
-			printf("  out_D  |");
+			printf("  turn_D |");
 			printf("  xdot   |");
 			printf("Des_alpha|");
 			printf("\n");
@@ -297,7 +301,7 @@ void* printf_loop(void* ptr){
 			printf("%7.3f  |", mb_state.in_pid_i);
 			printf("%7.3f  |", mb_state.out_pid_i);
 			printf("%7.3f  |", mb_state.in_pid_d);
-			printf("%7.3f  |", mb_state.out_pid_d);
+			printf("%7.3f  |", mb_state.turn_pid_d);
 			printf("%7.3f  |", mb_state.xdot);
 			printf("%7.3f  |", mb_state.desired_alpha);
 			fflush(stdout);
@@ -318,7 +322,12 @@ void* printf_loop(void* ptr){
 			fprintf(f1, "%lf,", mb_state.in_pid_d);
 			fprintf(f1, "%lf,", mb_state.out_pid_d);
 			fprintf(f1, "%lf,", mb_state.xdot);
-			fprintf(f1, "%lf\n", mb_state.desired_alpha);
+			fprintf(f1, "%lf,", mb_state.desired_alpha);
+			fprintf(f1, "%lf,", mb_state.turn_pid_p);
+			fprintf(f1, "%lf,", mb_state.turn_pid_i);
+			fprintf(f1, "%lf,", mb_state.turn_pid_d);
+			fprintf(f1, "%lf\n", mb_state.thetadot);
+
 		}
 		usleep(1000000 / PRINTF_HZ);
 	}
