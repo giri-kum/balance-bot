@@ -18,13 +18,21 @@ int mb_initialize_controller(){
     in_pid = PID_Init(in_pid_params.kp, in_pid_params.ki, in_pid_params.kd, in_pid_params.dFilterHz, SAMPLE_RATE_HZ); //defined in mb_defs.h
     out_pid = PID_Init(out_pid_params.kp, out_pid_params.ki, out_pid_params.kd, out_pid_params.dFilterHz, SAMPLE_RATE_HZ);
     turn_pid = PID_Init(turn_pid_params.kp, turn_pid_params.ki, turn_pid_params.kd, turn_pid_params.dFilterHz, SAMPLE_RATE_HZ);
+
     PID_SetOutputLimits(out_pid, -PI, PI);
-    PID_SetIntegralLimits(out_pid, -PI, PI);
-    out_Filter = rc_empty_filter(); 
+    PID_SetIntegralLimits(out_pid, -PI/10, PI/10);
+
+    out_Filter = rc_empty_filter();
+
     float dt, time_constant;
     dt = 1.0/(SAMPLE_RATE_HZ);
     time_constant = 1.0/(TWO_PI*(out_FilterHz)); // Sprite: TWO_PI is defined in rc_usefulincludes.h, which is included in mb_pid.h
+
     rc_first_order_lowpass(&(out_Filter), dt, time_constant); // Sprite: int rc_first_order_lowpass(rc_filter_t* f, float dt, float time_constant)
+
+    time_constant = 1.0/(TWO_PI*(turn_FilterHz)); // Sprite: TWO_PI is defined in rc_usefulincludes.h, which is included in mb_pid.h
+
+    rc_first_order_lowpass(&(turn_Filter), dt, time_constant); // Sprite: int rc_first_order_lowpass(rc_filter_t* f, float dt, float time_constant)
 
     return 0;
 }
@@ -77,6 +85,8 @@ int mb_load_controller_config(){
     fscanf(file, "%f",&temp);
     turn_queue_length = (int) temp;
     fscanf(file, "%f",&out_FilterHz);
+    fscanf(file, "%f",&turn_FilterHz);
+    fscanf(file, "%d",&outerloop_rate);
     fclose(file);
 
     // Sprite: for debugging purposes
@@ -87,6 +97,8 @@ int mb_load_controller_config(){
     printf("out queue length %d\n", out_queue_length);
     printf("turn queue length %d\n", turn_queue_length);
     printf("out_FilterHz =  %f\n", out_FilterHz);
+    printf("turn_FilterHz =  %f\n", turn_FilterHz);
+    printf("outerloop_rate =  %f\n", SAMPLE_RATE_HZ / (float) outerloop_rate);
     return 0;
 }
 
@@ -107,7 +119,7 @@ int mb_controller_update(mb_state_t* mb_state, mb_setpoints_t* mb_setpoints){
     // Sprite:added mb_setpoints as one of the argument, fwd_velocity
 
     // Sprite: initialize local variables
-    float error, error_out, error_turn, desired_alpha, output, turn_output,left_u,right_u;
+    float error, error_out, error_turn, output, desired_alpha, turn_output,left_u,right_u;
     int in_true, out_true, turn_true;
     in_true = 1;
     out_true = 0;
@@ -116,7 +128,9 @@ int mb_controller_update(mb_state_t* mb_state, mb_setpoints_t* mb_setpoints){
     error_out = mb_setpoints->fwd_velocity - mb_state->xdot;
     error_turn = mb_setpoints->turn_velocity - mb_state->imu_thetadot;
     error_out = rc_march_filter(&(out_Filter), error_out); 
-    // Sprite: Added filter for error_out (moving average of 30)
+    error_turn = rc_march_filter(&(turn_Filter), error_turn); 
+
+    // Sprite: Added filter for error_out (moving average of 30), switched to low-pass filter
  //   push_queue(error_out,out_filter_queue,out_queue_length);
  //   error_out = average_queue(out_filter_queue,out_queue_length);
 
@@ -126,13 +140,18 @@ int mb_controller_update(mb_state_t* mb_state, mb_setpoints_t* mb_setpoints){
     // Sprite: Compute input (desired-alpha) for the inner loop
     desired_alpha = mb_state->equilibrium_point - PID_Compute(out_pid, error_out, in_true);
 
+    if (((mb_state->count % (outerloop_rate+1)) == 0) || ((mb_state->count % (outerloop_rate+1)) == outerloop_rate)){
+        mb_state->desired_alpha = desired_alpha;
+        mb_state->count = 0;
+    }
+
     // Sprite: Compute error for the inner loop
-    error = desired_alpha - mb_state->alpha;
+    error = mb_state->desired_alpha - mb_state->alpha;
 
     // Sprite: Compute PID output for the motor
     output = compensate(PID_Compute(in_pid, error, out_true));
     turn_output = PID_Compute(turn_pid, error_turn, turn_true);
- //   printf("turn_pid->dTerm = %lf and mb_state = %lf \n",turn_pid->dTerm,mb_state->turn_pid_d);
+
     left_u = output+ turn_output;
     right_u = output-turn_output;
     if(left_u > 1)
@@ -146,7 +165,8 @@ int mb_controller_update(mb_state_t* mb_state, mb_setpoints_t* mb_setpoints){
     
     mb_state->right_cmd = ((float) ENC_1_POL)*right_u;
     mb_state->left_cmd = ((float) ENC_2_POL)*left_u;
-    
+
+    mb_state->count += 1;
 
     // Sprite: for debugging purposes, PID terms for the inner loop
     mb_state->in_pid_p = in_pid->pTerm;
@@ -159,7 +179,6 @@ int mb_controller_update(mb_state_t* mb_state, mb_setpoints_t* mb_setpoints){
     mb_state->out_pid_d = out_pid->dTerm;
     mb_state->turn_pid_d = turn_pid->dTerm;
     mb_state->error = error;
-    mb_state->desired_alpha = desired_alpha;
     return 0;
 }
 

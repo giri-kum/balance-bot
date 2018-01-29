@@ -62,6 +62,9 @@ int main(){
 		}
 	mb_state.equilibrium_point = sum/100;
 	prev_imu_theta = mb_state.equilibrium_point;
+
+	mb_state.count = 0;
+	
 	printf("Calibration completed: %lf \n",mb_state.equilibrium_point);
 	
 	//initialize state mutex
@@ -121,8 +124,6 @@ int main(){
 *
 *******************************************************************************/
 void balancebot_controller(){
-	
-		
 
 	//lock state mutex
 	pthread_mutex_lock(&state_mutex);

@@ -31,6 +31,8 @@ struct mb_state{
     float   odometry_thetadot;
     float   desired_alpha;
     float   equilibrium_point;
+    int   count; //Sprite: added count for running outer-loop at a slower rate
+
 };
 
 typedef struct mb_setpoints mb_setpoints_t;

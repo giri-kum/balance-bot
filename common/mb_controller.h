@@ -19,6 +19,7 @@ int out_queue_length;
 float out_filter_queue[100];
 int turn_queue_length;
 float turn_filter_queue[100];
+int outerloop_rate;
 
 void intialize_queue(float value,float *filter_queue, int queue_length);
 float average_queue(float *filter_queue, int queue_length);
@@ -30,7 +31,9 @@ PID_t *turn_pid;
 
 
 float out_FilterHz;
-rc_filter_t out_Filter; 
+float turn_FilterHz;
+rc_filter_t out_Filter;
+rc_filter_t turn_Filter; 
   
 
 
