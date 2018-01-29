@@ -12,7 +12,7 @@
 int mb_initialize_controller(){
 
     mb_load_controller_config();
-    dqueue_length = 100;
+    dqueue_length = 50;
     dintialize_queue(0);
     //TODO: initialize your controller here
     //Sprite:
@@ -88,12 +88,12 @@ int mb_controller_update(mb_state_t* mb_state, mb_setpoints_t* mb_setpoints){
     // Sprite: initialize local variables
     float error, error_out, desired_alpha, output;
 
-    // Sprite: Added filter for xdot (moving average of 100)
-    dpush_queue(mb_state->xdot);
-    mb_state->xdot = daverage_queue();
-
     // Sprite: Compute error for the outer loop
     error_out = mb_setpoints->fwd_velocity - mb_state->xdot;
+
+    // Sprite: Added filter for error_out (moving average of 100)
+    dpush_queue(error_out);
+    error_out = daverage_queue();
 
     // Sprite: Compute input (desired-alpha) for the inner loop
     desired_alpha = PI - PID_Compute(out_pid, error_out);

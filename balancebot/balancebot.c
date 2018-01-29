@@ -13,6 +13,8 @@
 int main(){
 	queue_length = 3;
 	intialize_queue(0);
+	mb_setpoints.fwd_velocity = 0;
+	mb_setpoints.turn_velocity = 0;	
 	// always initialize cape library first
 	if(rc_initialize()){
 		fprintf(stderr,"ERROR: failed to initialize rc_initialize(), are you root?\n");

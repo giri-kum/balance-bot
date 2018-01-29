@@ -15,7 +15,7 @@ float compensator;
 pid_parameters_t in_pid_params;
 pid_parameters_t out_pid_params;
 int dqueue_length;
-float dfilter_queue[100];
+float dfilter_queue[50];
 void dpush_queue(float value);
 void dintialize_queue(float value);
 float daverage_queue();
