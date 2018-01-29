@@ -68,6 +68,12 @@ struct mb_setpoints{
     int manual_ctl;
 };
 
+typedef struct mb_waypoints mb_waypoints_t;
+struct mb_waypoints{
+    float position[2];
+    float heading;
+};
+
 typedef struct mb_odometry mb_odometry_t;
 struct mb_odometry{
 

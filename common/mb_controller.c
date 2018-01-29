@@ -20,6 +20,7 @@ int mb_initialize_controller(){
     position_pid = PID_Init(position_pid_params.kp, position_pid_params.ki, position_pid_params.kd, position_pid_params.dFilterHz, SAMPLE_RATE_HZ);
     heading_pid = PID_Init(heading_pid_params.kp, heading_pid_params.ki, heading_pid_params.kd, heading_pid_params.dFilterHz, SAMPLE_RATE_HZ);
     states = 2;
+    waypoint_number = 0;
     
     PID_SetOutputLimits(out_pid, -PI, PI);
     PID_SetIntegralLimits(out_pid, -PI/10, PI/10);
@@ -148,7 +149,8 @@ int mb_controller_update(mb_state_t* mb_state, mb_setpoints_t* mb_setpoints){
     // the IMU interrupt function
     if(mb_setpoints->manual_ctl!=1) // autonomous control
     {
-       statemachine(mb_state,mb_setpoints);
+        if(waypoint_number != -1)
+            statemachine(mb_state,mb_setpoints);
     }
     
     balance(mb_state, mb_setpoints->fwd_velocity, mb_setpoints->turn_velocity);
@@ -157,13 +159,31 @@ return 0;
 
 void statemachine(mb_state_t* mb_state, mb_setpoints_t* mb_setpoints)
 {
-    if(states != 2)
+    if(states == 2)
+    {
+        if(waypoint_number == total_waypoints)
+            {
+                waypoint_number = -1;
+                mb_setpoints->fwd_velocity = 0;
+                mb_setpoints->turn_velocity = 0;
+            }
+        else
+            {
+                mb_setpoints->position[0] = mb_waypoints[waypoint_number].position[0];
+                mb_setpoints->position[1] = mb_waypoints[waypoint_number].position[1];
+                waypoint_number++;
+                printf("\n New waypoint set! waypoint_number %d :%f %f \n", waypoint_number, mb_setpoints->position[0], mb_setpoints->position[1]);
+            }   
+        states = 0;
+    }
+    else
         states = get_rtr_state(mb_state,mb_setpoints);
+    
 }
 
 int get_rtr_state(mb_state_t* mb_state, mb_setpoints_t* mb_setpoints)
 {
-    float tolerance_position = 0.1, tolerance_angle = 0.1;
+    float tolerance_position = 0.2, tolerance_angle = 0.1;
     mb_setpoints->heading = atan2((mb_setpoints->position[1]-mb_state->odometry_y),(mb_setpoints->position[0]-mb_state->odometry_x));
     mb_setpoints->distance = sqrt(pow(mb_setpoints->position[0]-mb_state->odometry_x,2) + pow(mb_setpoints->position[1]-mb_state->odometry_y,2));
     if(mb_setpoints->heading < 0)
@@ -177,7 +197,8 @@ int get_rtr_state(mb_state_t* mb_state, mb_setpoints_t* mb_setpoints)
         case 0: // from idle state to rotation 1 state
                 {
                  heading_controller(mb_state,mb_setpoints);
-                 if(mb_state->error_heading < tolerance_angle)
+                 mb_setpoints->fwd_velocity = 0;
+                 if(mb_state->error_heading < tolerance_angle && mb_state->error_heading > -tolerance_angle)
                     return 1;
                  else
                     return 0;
@@ -185,7 +206,8 @@ int get_rtr_state(mb_state_t* mb_state, mb_setpoints_t* mb_setpoints)
         case 1: // from idle rotation 1 to translation state
                 {
                  position_controller(mb_state,mb_setpoints);
-                 if(mb_state->error_position < tolerance_position)
+                 mb_setpoints->turn_velocity = 0;
+                 if(mb_state->error_position < tolerance_position && mb_state->error_position > -tolerance_position)
                     return 2;
                  else
                     return 1;

@@ -98,7 +98,7 @@ int main(){
 	if(use_optitrack == 1)
 		mb_initialize_odometry(&mb_odometry, mb_state.opti_x ,mb_state.opti_y,mb_state.opti_theta);
 	else
-		mb_initialize_odometry(&mb_odometry, 0.0 ,0.0,0.0);
+		mb_initialize_odometry(&mb_odometry,0.0,0.0,0.0);
 	printf("attaching imu interupt...\n");
 	rc_set_imu_interrupt_func(&balancebot_controller);
 
@@ -158,10 +158,10 @@ void balancebot_controller(){
 	fprintf(f, "%lf,", mb_state.imu_theta);
 	fprintf(f, "%lf,", mb_state.theta);
 	fprintf(f, "%lf,", mb_state.xdot);
-	fprintf(f, "%lf,", mb_state.thetadot);
-	fprintf(f, "%lf,", mb_state.imu_deltheta);
-	fprintf(f, "%lf,", mb_state.odometry_deltheta);
-	fprintf(f, "%lf\n", mb_odometry.final_deltheta);
+	fprintf(f, "%lf,", mb_state.odometry_x);
+	fprintf(f, "%lf,", mb_state.odometry_y);
+	fprintf(f, "%d,", waypoint_number);
+	fprintf(f, "%d\n", states);
 			
 	//fprintf(f, "%lf,", mb_state.in_pid_d);
 	//fprintf(f, "%lf,", mb_state.out_pid_d);
@@ -227,10 +227,11 @@ void* setpoint_control_loop(void* ptr){
 					mb_setpoints.manual_ctl = 1;
 					mb_setpoints.fwd_velocity = FWD_VEL_SENSITIVITY * rc_get_dsm_ch_normalized(3);
 					mb_setpoints.turn_velocity = TURN_VEL_SENSITIVITY * rc_get_dsm_ch_normalized(4);
+					states = 0;
+					waypoint_number = 0;
 				}
 			else{ //Autonomous mode: set points are controlled by the code, it is zero for the time being.
 				mb_setpoints.manual_ctl = 0;
-				states = 0;
 				}
 	 	}
 	 	else
@@ -327,8 +328,8 @@ void* printf_loop(void* ptr){
 			printf("    X    |");
 			printf("    Y    |");
 			printf("    θ    |");
-			printf(" opti_X  |");
-			printf(" opti_Y  |");
+			printf("manualctl|");
+			printf("waypoint |");
 			printf(" opti_θ    |");
 			printf("positionP|");
 			printf("heading_P|");
@@ -378,8 +379,8 @@ void* printf_loop(void* ptr){
 			printf("%7.3f  |", mb_odometry.x);
 			printf("%7.3f  |", mb_odometry.y);
 			printf("%7.3f  |", mb_odometry.theta);
-			printf("%7.3f  |", mb_state.opti_x);
-			printf("%7.3f  |", mb_state.opti_y);
+			printf("%7d  |", mb_setpoints.manual_ctl);
+			printf("%7d  |", waypoint_number);
 			printf("%7.3f  |", mb_state.opti_theta);
 
 			printf("%7.3f  |", mb_state.position_pid_p);
@@ -387,7 +388,7 @@ void* printf_loop(void* ptr){
 			printf("%7.3f  |", mb_state.error_position);
 			printf("%7.3f  |", mb_state.error_heading);
 			printf("%7.3f  |", mb_state.xdot);
-			printf(" %d    |", states);
+			printf(" %7d   |", states);
 		//Add Print stattements here, do not follow with /n
 			fflush(stdout);
 			fprintf(f1, "%lf,", mb_state.alpha);
@@ -399,8 +400,8 @@ void* printf_loop(void* ptr){
 			fprintf(f1, "%lf,", mb_odometry.x);
 			fprintf(f1, "%lf,", mb_odometry.y);
 			fprintf(f1, "%lf,", mb_odometry.theta);
-			fprintf(f1, "%lf,", mb_state.opti_x);
-			fprintf(f1, "%lf,", mb_state.opti_y);
+			fprintf(f1, "%d,", mb_setpoints.manual_ctl);
+			fprintf(f1, "%d,", waypoint_number);
 			fprintf(f1, "%lf,", mb_state.opti_theta);
 			fprintf(f1, "%lf,", mb_state.position_pid_p);
 			fprintf(f1, "%lf,", mb_state.heading_pid_p);
@@ -433,19 +434,20 @@ float wrap_angle(float value)
 	return value>0? (value):(value + TWO_PI);
 }
 
-int mb_load_setpoint_config(){
+int mb_load_setpoint_config()
+{   
     FILE* file = fopen("setpoints.cfg", "r");
     if (file == NULL){
         printf("Error opening setpoints.cfg\n");
     }
 				
-    //TODO: You can add to or modify the cfg file as you like
-    // This is here as an example
-    fscanf(file, "%f %f %f ", 
-        &mb_setpoints.position[0],
-        &mb_setpoints.position[1],
-        &mb_setpoints.heading
-        );
+	fscanf(file,"%d", &total_waypoints);
+	
+	for (int i = 0; i< total_waypoints; i++)			
+	    {
+	    	fscanf(file, "%f %f %f ", &mb_waypoints[i].position[0], &mb_waypoints[i].position[1],&mb_waypoints[i].heading);
+	    	printf("Waypoint number %d : %f %f %f \n", i, mb_waypoints[i].position[0], mb_waypoints[i].position[1],mb_waypoints[i].heading);
+	    }
 
     fclose(file);
    

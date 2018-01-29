@@ -37,7 +37,9 @@ PID_t *out_pid;
 PID_t *turn_pid;
 PID_t *position_pid;
 PID_t *heading_pid;
-
+mb_waypoints_t mb_waypoints[100];
+int total_waypoints;
+int waypoint_number;
 int sensor_scheme;
 int use_optitrack;
 float gyrodometry_threshold;
