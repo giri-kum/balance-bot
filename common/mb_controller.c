@@ -11,7 +11,6 @@
 *******************************************************************************/
 int mb_initialize_controller(){
 
-    mb_load_controller_config();
     intialize_queue(0,out_filter_queue,out_queue_length);
     //TODO: initialize your controller here
     //Sprite:
@@ -108,7 +107,8 @@ int mb_load_controller_config(){
     fscanf(file, "%d",&outerloop_rate);
     fscanf(file, "%d",&sensor_scheme);
     fscanf(file, "%f",&gyrodometry_threshold);
-    fclose(file);
+    fscanf(file, "%f",&calibrate_imu);
+     fclose(file);
 
     // Sprite: for debugging purposes
     printf("in_pid %f, %f, %f, %f\n", in_pid_params.kp, in_pid_params.ki, in_pid_params.kd, in_pid_params.dFilterHz);
@@ -124,6 +124,7 @@ int mb_load_controller_config(){
     printf("outerloop_rate =  %f\n", SAMPLE_RATE_HZ / (float) outerloop_rate);
     printf("sensor_scheme =  %d\n", sensor_scheme);
     printf("gyrodometry_threshold =  %f\n", gyrodometry_threshold);
+    printf("calibrate_imu =  %f\n", calibrate_imu);
     return 0;
 }
 
@@ -158,7 +159,7 @@ int mb_controller_update(mb_state_t* mb_state, mb_setpoints_t* mb_setpoints){
  //       if (((mb_state->count % (outerloop_rate+1)) == 0) || ((mb_state->count % (outerloop_rate+1)) == outerloop_rate))
  //       {
             error_position = sqrt(pow(mb_setpoints->position[0]-mb_state->odometry_x,2) + pow(mb_setpoints->position[1]-mb_state->odometry_y,2));
-            error_heading = mb_state->theta + mb_state->theta_calc;
+            error_heading = mb_state->theta_calc - mb_state->theta ;
             mb_setpoints->fwd_velocity = PID_Compute(position_pid, error_position, position_true);
             mb_setpoints->turn_velocity = PID_Compute(heading_pid, error_heading, heading_true);
 //        }

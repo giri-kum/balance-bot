@@ -56,17 +56,24 @@ int main(){
 		fprintf(stderr,"ERROR: can't talk to IMU! Exiting.\n");
 		return -1;
 	}
-
+    mb_load_controller_config();
 	rc_nanosleep(10E9); // wait for imu to stabilize
-	printf("Calibrating for equilibrium position \n");
-	for(iter = 0; iter < 100; iter++)
-		{		
-				sum = sum + (wrap_angle(imu_data.dmp_TaitBryan[TB_PITCH_X]));
-				rc_nanosleep(20E6);
-		}
-	mb_state.equilibrium_point = sum/100;
-	prev_imu_theta = mb_state.equilibrium_point;
-
+	if(calibrate_imu - 1.0 < 0.0001)
+	{
+		printf("Calibrating for equilibrium position \n");
+		for(iter = 0; iter < 100; iter++)
+			{		
+					sum = sum + (wrap_angle(imu_data.dmp_TaitBryan[TB_PITCH_X]));
+					rc_nanosleep(20E6);
+			}
+		mb_state.equilibrium_point = sum/100;
+		prev_imu_theta = mb_state.equilibrium_point;
+	}
+	else
+	{
+		mb_state.equilibrium_point = calibrate_imu;
+		prev_imu_theta = mb_state.equilibrium_point;	
+	}
 	mb_state.count = 0;
 	
 	printf("Calibration completed: %lf \n",mb_state.equilibrium_point);
@@ -86,7 +93,7 @@ int main(){
 	rc_set_encoder_pos(2, 0);
 
 	printf("initializing odometry...\n");
-	mb_initialize_odometry(&mb_odometry, 0.0,0.0,0.0);
+	mb_initialize_odometry(&mb_odometry, mb_state.opti_x ,mb_state.opti_y,mb_state.opti_theta);
 
 	printf("attaching imu interupt...\n");
 	rc_set_imu_interrupt_func(&balancebot_controller);

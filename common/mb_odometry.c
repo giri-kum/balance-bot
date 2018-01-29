@@ -67,9 +67,9 @@ float mb_clamp_radians(float angle){
 	// 	angle = angle-PI;
 	// while(angle<-PI)
 	// 	angle = angle+PI;
-	angle = fmod(angle,TWO_PI);
+	angle = fmod(angle+PI,TWO_PI);
 	if (angle<0.0){
 		angle += TWO_PI;
 	}
-	return angle;
+	return angle-PI;
 }
