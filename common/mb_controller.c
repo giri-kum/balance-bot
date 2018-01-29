@@ -12,14 +12,13 @@
 int mb_initialize_controller(){
 
     mb_load_controller_config();
-    dqueue_length = 30;
     dintialize_queue(0);
     //TODO: initialize your controller here
     //Sprite:
     in_pid = PID_Init(in_pid_params.kp, in_pid_params.ki, in_pid_params.kd, in_pid_params.dFilterHz, SAMPLE_RATE_HZ); //defined in mb_defs.h
     out_pid = PID_Init(out_pid_params.kp, out_pid_params.ki, out_pid_params.kd, out_pid_params.dFilterHz, SAMPLE_RATE_HZ);
     PID_SetOutputLimits(out_pid, -PI, PI);
-
+    PID_SetIntegralLimits(out_pid, -PI, PI);
     return 0;
 }
 
@@ -35,6 +34,7 @@ int mb_initialize_controller(){
 
 
 int mb_load_controller_config(){
+    float temp;
     FILE* file = fopen(CFG_PATH, "r");
     if (file == NULL){
         printf("Error opening pid.cfg\n");
@@ -58,14 +58,15 @@ int mb_load_controller_config(){
         );
 
     fscanf(file, "%f",&compensator);
-
+    fscanf(file, "%f",&temp);
+    dqueue_length = (int) temp;
     fclose(file);
 
     // Sprite: for debugging purposes
     printf("in_pid %f, %f, %f, %f\n", in_pid_params.kp, in_pid_params.ki, in_pid_params.kd, in_pid_params.dFilterHz);
     printf("out_pid %f, %f, %f, %f\n", out_pid_params.kp, out_pid_params.ki, out_pid_params.kd, out_pid_params.dFilterHz);
     printf("compensator %f\n", compensator);
-
+    printf("queue length %d\n", dqueue_length);
     return 0;
 }
 

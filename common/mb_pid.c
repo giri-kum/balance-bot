@@ -61,7 +61,8 @@ float PID_Compute(PID_t* pid, float error, int in_true) {
 
   // Sprite: compute pTerm
   pid->pTerm = (pid->kp)*(pid->pidInput);
-
+  if(pid->iTerm == pid->iTermMin || pid->iTerm == pid->iTermMax)
+      PID_ResetIntegrator(pid);
   // Sprite: compute iTerm
   pid->iTerm = (pid->ki)*((pid->pidInput)*dt + (pid->iTerm));
 

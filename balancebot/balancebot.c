@@ -245,15 +245,12 @@ void* printf_loop(void* ptr){
 			printf("    X    |");
 			printf("    Y    |");
 			printf("    θ    |");
-			/*printf("  CH3    |");
-			printf("  CH4    |");
-			printf("  CH5    |");*/
 			printf("  error  |");
-			printf("  L_P    |");
+			printf("  in_P   |");
 			printf("  out_P  |");
-			printf("  L_I    |");
+			printf("  in_I   |");
 			printf("  out_I  |");
-			printf("  L_D    |");
+			printf("  in_D   |");
 			printf("  out_D  |");
 			printf("  xdot   |");
 			printf("Des_alpha|");
@@ -298,9 +295,6 @@ void* printf_loop(void* ptr){
 			printf("%7.3f  |", mb_odometry.x);
 			printf("%7.3f  |", mb_odometry.y);
 			printf("%7.3f  |", mb_odometry.theta);
-			/*printf("%7.3f  |", rc_get_dsm_ch_normalized(3));
-			printf("%7.3f  |", rc_get_dsm_ch_normalized(4));
-			printf("%7.3f  |", rc_get_dsm_ch_normalized(5));*/
 			printf("%7.3f  |", mb_state.error);
 			printf("%7.3f  |", mb_state.in_pid_p);
 			printf("%7.3f  |", mb_state.out_pid_p);
