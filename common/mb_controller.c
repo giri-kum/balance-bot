@@ -24,12 +24,13 @@ int mb_initialize_controller(){
     PID_SetIntegralLimits(out_pid, -PI/10, PI/10);
 
     PID_SetOutputLimits(position_pid, -0.5, 0.5);
-    PID_SetOutputLimits(heading_pid, -1, 1);
+    PID_SetOutputLimits(heading_pid, -1.5, 1.5);
 
     PID_SetOutputLimits(turn_pid, -PI/6, PI/6);
     PID_SetIntegralLimits(turn_pid, -PI/10, PI/10);
 
     out_Filter = rc_empty_filter();
+    turn_Filter = rc_empty_filter();
 
     float dt, time_constant;
     dt = 1.0/(SAMPLE_RATE_HZ);
@@ -108,7 +109,8 @@ int mb_load_controller_config(){
     fscanf(file, "%d",&sensor_scheme);
     fscanf(file, "%f",&gyrodometry_threshold);
     fscanf(file, "%f",&calibrate_imu);
-     fclose(file);
+    fscanf(file, "%d",&use_optitrack);
+    fclose(file);
 
     // Sprite: for debugging purposes
     printf("in_pid %f, %f, %f, %f\n", in_pid_params.kp, in_pid_params.ki, in_pid_params.kd, in_pid_params.dFilterHz);
@@ -125,6 +127,7 @@ int mb_load_controller_config(){
     printf("sensor_scheme =  %d\n", sensor_scheme);
     printf("gyrodometry_threshold =  %f\n", gyrodometry_threshold);
     printf("calibrate_imu =  %f\n", calibrate_imu);
+    printf("use_optitrack =  %d\n", use_optitrack);
     return 0;
 }
 
@@ -153,16 +156,19 @@ int mb_controller_update(mb_state_t* mb_state, mb_setpoints_t* mb_setpoints){
     position_true = 0;
     heading_true = 0;
     mb_state->theta_calc = atan2((mb_setpoints->position[1]-mb_state->odometry_y),(mb_setpoints->position[0]-mb_state->odometry_x));
+    error_position = sqrt(pow(mb_setpoints->position[0]-mb_state->odometry_x,2) + pow(mb_setpoints->position[1]-mb_state->odometry_y,2));
+    error_heading = mb_state->theta_calc - mb_state->theta;
+    error_heading = rc_march_filter(&heading_pid->dFilter, error_heading);
+
     // Sprite: Compute error for the outer loop
     if(mb_setpoints->manual_ctl!=1)
     {
- //       if (((mb_state->count % (outerloop_rate+1)) == 0) || ((mb_state->count % (outerloop_rate+1)) == outerloop_rate))
- //       {
-            error_position = sqrt(pow(mb_setpoints->position[0]-mb_state->odometry_x,2) + pow(mb_setpoints->position[1]-mb_state->odometry_y,2));
-            error_heading = mb_state->theta_calc - mb_state->theta ;
-            mb_setpoints->fwd_velocity = PID_Compute(position_pid, error_position, position_true);
-            mb_setpoints->turn_velocity = PID_Compute(heading_pid, error_heading, heading_true);
-//        }
+
+        mb_setpoints->fwd_velocity = PID_Compute(position_pid, error_position, position_true);
+        mb_setpoints->turn_velocity = PID_Compute(heading_pid, error_heading, heading_true);
+        mb_state->heading_pid_p = mb_setpoints->turn_velocity;
+        mb_state->position_pid_p = mb_setpoints->fwd_velocity;
+
     }
     error_out = mb_setpoints->fwd_velocity - mb_state->xdot;
     error_turn = mb_setpoints->turn_velocity - mb_state->thetadot;
@@ -223,10 +229,9 @@ int mb_controller_update(mb_state_t* mb_state, mb_setpoints_t* mb_setpoints){
     mb_state->turn_pid_d = turn_pid->dTerm;
     mb_state->error = error;
 
-    mb_state->heading_pid_p = heading_pid->pTerm;
-    mb_state->position_pid_p = position_pid->pTerm;
     mb_state->error_heading = error_heading;
     mb_state->error_position = error_position;
+
 
     return 0;
 }

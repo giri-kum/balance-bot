@@ -56,7 +56,7 @@ int main(){
 		fprintf(stderr,"ERROR: can't talk to IMU! Exiting.\n");
 		return -1;
 	}
-    mb_load_controller_config();
+    mb_load_controller_config(); //Reading from pid.cfg file
 	rc_nanosleep(10E9); // wait for imu to stabilize
 	if(calibrate_imu - 1.0 < 0.0001)
 	{
@@ -93,8 +93,10 @@ int main(){
 	rc_set_encoder_pos(2, 0);
 
 	printf("initializing odometry...\n");
-	mb_initialize_odometry(&mb_odometry, mb_state.opti_x ,mb_state.opti_y,mb_state.opti_theta);
-
+	if(use_optitrack == 1)
+		mb_initialize_odometry(&mb_odometry, mb_state.opti_x ,mb_state.opti_y,mb_state.opti_theta);
+	else
+		mb_initialize_odometry(&mb_odometry, 0.0 ,0.0,0.0);
 	printf("attaching imu interupt...\n");
 	rc_set_imu_interrupt_func(&balancebot_controller);
 
@@ -415,6 +417,8 @@ void* printf_loop(void* ptr){
 			fprintf(f1, "%lf,", mb_state.imu_deltheta);
 			fprintf(f1, "%lf,", mb_state.odometry_deltheta);
 			fprintf(f1, "%lf,", mb_odometry.final_deltheta);
+			fprintf(f1, "%lf,", mb_state.theta);
+			fprintf(f1, "%lf,", mb_setpoints.heading);
 			fprintf(f1, "%lf\n", mb_state.thetadot);
 			
 

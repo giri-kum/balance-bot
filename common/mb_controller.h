@@ -35,6 +35,7 @@ PID_t *position_pid;
 PID_t *heading_pid;
 
 int sensor_scheme;
+int use_optitrack;
 float gyrodometry_threshold;
 float out_FilterHz;
 float turn_FilterHz;
