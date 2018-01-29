@@ -14,13 +14,18 @@ float compensate(float command);
 float compensator;
 pid_parameters_t in_pid_params;
 pid_parameters_t out_pid_params;
-int dqueue_length;
-float dfilter_queue[50];
-void dpush_queue(float value);
-void dintialize_queue(float value);
-float daverage_queue();
+pid_parameters_t turn_pid_params;
+int out_queue_length;
+float out_filter_queue[100];
+int turn_queue_length;
+float turn_filter_queue[100];
+
+void intialize_queue(float value,float *filter_queue, int queue_length);
+float average_queue(float *filter_queue, int queue_length);
+void push_queue(float value,float *filter_queue, int queue_length);
 PID_t *in_pid;
 PID_t *out_pid;
+PID_t *turn_pid;
 
 
 #endif

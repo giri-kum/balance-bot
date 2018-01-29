@@ -12,11 +12,12 @@
 int mb_initialize_controller(){
 
     mb_load_controller_config();
-    dintialize_queue(0);
+    intialize_queue(0,out_filter_queue,out_queue_length);
     //TODO: initialize your controller here
     //Sprite:
     in_pid = PID_Init(in_pid_params.kp, in_pid_params.ki, in_pid_params.kd, in_pid_params.dFilterHz, SAMPLE_RATE_HZ); //defined in mb_defs.h
     out_pid = PID_Init(out_pid_params.kp, out_pid_params.ki, out_pid_params.kd, out_pid_params.dFilterHz, SAMPLE_RATE_HZ);
+    turn_pid = PID_Init(turn_pid_params.kp, turn_pid_params.ki, turn_pid_params.kd, turn_pid_params.dFilterHz, SAMPLE_RATE_HZ);
     PID_SetOutputLimits(out_pid, -PI, PI);
     PID_SetIntegralLimits(out_pid, -PI, PI);
     return 0;
@@ -57,16 +58,27 @@ int mb_load_controller_config(){
         &out_pid_params.dFilterHz
         );
 
+    fscanf(file, "%f %f %f %f",
+        &turn_pid_params.kp,
+        &turn_pid_params.ki,
+        &turn_pid_params.kd,
+        &turn_pid_params.dFilterHz
+        );
+
     fscanf(file, "%f",&compensator);
     fscanf(file, "%f",&temp);
-    dqueue_length = (int) temp;
+    out_queue_length = (int) temp;
+    fscanf(file, "%f",&temp);
+    turn_queue_length = (int) temp;
     fclose(file);
 
     // Sprite: for debugging purposes
     printf("in_pid %f, %f, %f, %f\n", in_pid_params.kp, in_pid_params.ki, in_pid_params.kd, in_pid_params.dFilterHz);
     printf("out_pid %f, %f, %f, %f\n", out_pid_params.kp, out_pid_params.ki, out_pid_params.kd, out_pid_params.dFilterHz);
+    printf("turn_pid %f, %f, %f, %f\n", turn_pid_params.kp, turn_pid_params.ki, turn_pid_params.kd, turn_pid_params.dFilterHz);
     printf("compensator %f\n", compensator);
-    printf("queue length %d\n", dqueue_length);
+    printf("out queue length %d\n", out_queue_length);
+    printf("turn queue length %d\n", turn_queue_length);
     return 0;
 }
 
@@ -87,15 +99,19 @@ int mb_controller_update(mb_state_t* mb_state, mb_setpoints_t* mb_setpoints){
     // Sprite:added mb_setpoints as one of the argument, fwd_velocity
 
     // Sprite: initialize local variables
-    float error, error_out, desired_alpha, output;
+    float error, error_out, error_turn, desired_alpha, output;
     int in_true;
     in_true = 1;
     // Sprite: Compute error for the outer loop
     error_out = mb_setpoints->fwd_velocity - mb_state->xdot;
+    error_turn = mb_setpoints->turn_velocity - mb_state->thetadot;
 
     // Sprite: Added filter for error_out (moving average of 30)
-    dpush_queue(error_out);
-    error_out = daverage_queue();
+    push_queue(error_out,out_filter_queue,out_queue_length);
+    error_out = average_queue(out_filter_queue,out_queue_length);
+
+    push_queue(error_turn,turn_filter_queue,turn_queue_length);
+    error_turn = average_queue(turn_filter_queue,turn_queue_length);
 
     // Sprite: Compute input (desired-alpha) for the inner loop
     desired_alpha = mb_state->equilibrium_point - PID_Compute(out_pid, error_out, 0);
@@ -105,8 +121,8 @@ int mb_controller_update(mb_state_t* mb_state, mb_setpoints_t* mb_setpoints){
 
     // Sprite: Compute PID output for the motor
     output = compensate(PID_Compute(in_pid, error, in_true));
-    mb_state->right_cmd = ((float) ENC_1_POL)*SPEED_RATIO*output;
-    mb_state->left_cmd = ((float) ENC_2_POL)*output;
+    mb_state->right_cmd = ((float) ENC_1_POL)*SPEED_RATIO*output+PID_Compute(turn_pid, error_turn, 0);
+    mb_state->left_cmd = ((float) ENC_2_POL)*output-PID_Compute(turn_pid, error_turn, 0);
     
 
     // Sprite: for debugging purposes, PID terms for the inner loop
@@ -160,32 +176,32 @@ int mb_destroy_controller(){
     return 0;
 }
 
-void dpush_queue(float value)
+void push_queue(float value,float *filter_queue, int queue_length)
 {
     int i = 0;
-    for(i = 0; i<dqueue_length-1;i++)
+    for(i = 0; i<queue_length-1;i++)
         {
-            dfilter_queue[i]= dfilter_queue[i+1];
+            filter_queue[i]= filter_queue[i+1];
         }
-    dfilter_queue[dqueue_length-1] = value;
+    filter_queue[queue_length-1] = value;
 }
-void dintialize_queue(float value)
+void intialize_queue(float value,float *filter_queue, int queue_length)
 {
     int i = 0;
-    dfilter_queue[0] = value;
-    for(i = 0; i<dqueue_length-1;i++)
+    filter_queue[0] = value;
+    for(i = 0; i<queue_length-1;i++)
         {
-            dfilter_queue[i+1]= dfilter_queue[i];
+            filter_queue[i+1]= filter_queue[i];
         }
 }
 
-float daverage_queue()
+float average_queue(float *filter_queue, int queue_length)
 {
     float sum = 0;
     int i = 0;
-    for (i = 0; i < dqueue_length; ++i)
+    for (i = 0; i < queue_length; ++i)
     {
-        sum += dfilter_queue[i];
+        sum += filter_queue[i];
     }
-    return sum/dqueue_length;
+    return sum/queue_length;
 }

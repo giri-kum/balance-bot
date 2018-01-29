@@ -23,6 +23,7 @@ struct mb_state{
     float   out_pid_d;
     float   error;
     float   xdot;
+    float   thetadot;
     float   desired_alpha;
     float   equilibrium_point;
 };

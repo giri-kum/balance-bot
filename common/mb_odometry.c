@@ -23,13 +23,17 @@ void mb_update_odometry(mb_odometry_t* mb_odometry, mb_state_t* mb_state){
 
 	dr = (mb_state->right_encoder)*WHEEL_DIAMETER*PI/CPR;
 	dl = (mb_state->left_encoder)*WHEEL_DIAMETER*PI/CPR;
+
 	mb_odometry->del_x = (dr+dl)/2.0;
 	mb_odometry->del_y = 0;
 	mb_odometry->del_theta = (dr-dl)/WHEEL_BASE;
+
 	mb_odometry->x = mb_odometry->x + mb_odometry->del_x;
 	mb_odometry->y = mb_odometry->y + mb_odometry->del_y;
 	mb_odometry->theta = mb_odometry->theta + mb_odometry->del_theta;
+
 	mb_state->xdot = mb_odometry->del_x/DT;
+	mb_state->thetadot = mb_odometry->del_theta/DT;
 
 }
 

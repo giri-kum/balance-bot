@@ -11,10 +11,8 @@
 *
 *******************************************************************************/
 int main(){
-	int iter = 0;
-	queue_length = 100;
-
-	intialize_queue(0);
+	int iter = 0; 
+	float sum = 0;
 	mb_setpoints.fwd_velocity = 0;
 	mb_setpoints.turn_velocity = 0;	
 	// always initialize cape library first
@@ -56,12 +54,12 @@ int main(){
 
 	rc_nanosleep(10E9); // wait for imu to stabilize
 	printf("Calibrating for equilibrium position \n");
-	for(iter = 0; iter < queue_length; iter++)
+	for(iter = 0; iter < 100; iter++)
 		{		
-				push_queue(wrap_angle(imu_data.dmp_TaitBryan[TB_PITCH_X]));
+				sum = sum + (wrap_angle(imu_data.dmp_TaitBryan[TB_PITCH_X]));
 				rc_nanosleep(20E6);
 		}
-	mb_state.equilibrium_point = average_queue();
+	mb_state.equilibrium_point = sum/100;
 	printf("Calibration completed: %lf \n",mb_state.equilibrium_point);
 	
 	//initialize state mutex
@@ -130,8 +128,6 @@ void balancebot_controller(){
 	mb_state.alpha = imu_data.dmp_TaitBryan[TB_PITCH_X];
 	// wrap angle
 	mb_state.alpha = wrap_angle(mb_state.alpha);
-	push_queue(mb_state.alpha);
-	//mb_state.alpha = average_queue();
 	mb_state.theta = imu_data.dmp_TaitBryan[TB_YAW_Z];
 	fprintf(f, "%lf,", mb_state.alpha);
 	fprintf(f, "%lf,", mb_state.in_pid_d);
@@ -330,32 +326,6 @@ void* printf_loop(void* ptr){
 	return NULL;
 } 
 
-void push_queue(float value)
-{
-	for(int i = 0; i<queue_length-1;i++)
-		{
-			filter_queue[i]= filter_queue[i+1];
-		}
-	filter_queue[queue_length-1] = value;
-}
-void intialize_queue(float value)
-{
-	filter_queue[0] = value;
-	for(int i = 0; i<queue_length-1;i++)
-		{
-			filter_queue[i+1]= filter_queue[i];
-		}
-}
-
-float average_queue()
-{
-	float sum = 0;
-	for (int i = 0; i < queue_length; ++i)
-	{
-		sum += filter_queue[i];
-	}
-	return sum/queue_length;
-}
 float wrap_angle(float value)
 {
 	return value>0? (value):(value + TWO_PI);
