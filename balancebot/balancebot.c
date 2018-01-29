@@ -56,7 +56,9 @@ int main(){
 		fprintf(stderr,"ERROR: can't talk to IMU! Exiting.\n");
 		return -1;
 	}
+	mb_load_setpoint_config();
     mb_load_controller_config(); //Reading from pid.cfg file
+    printf("setpoints %f, %f, %f\n", mb_setpoints.position[0],mb_setpoints.position[1],mb_setpoints.heading);
 	rc_nanosleep(10E9); // wait for imu to stabilize
 	if(calibrate_imu - 1.0 < 0.0001)
 	{
@@ -101,8 +103,7 @@ int main(){
 	rc_set_imu_interrupt_func(&balancebot_controller);
 
 
-    printf("setpoints %f, %f, %f\n", mb_setpoints.position[0],mb_setpoints.position[1],mb_setpoints.heading);
-	printf("we are running!!!...\n");
+    printf("we are running!!!...\n");
 	// done initializing so set state to RUNNING
 	rc_set_state(RUNNING); 
 
@@ -229,7 +230,6 @@ void* setpoint_control_loop(void* ptr){
 				}
 			else{ //Autonomous mode: set points are controlled by the code, it is zero for the time being.
 				mb_setpoints.manual_ctl = 0;
-				mb_load_setpoint_config();
 				}
 	 	}
 	 	else
@@ -334,7 +334,7 @@ void* printf_loop(void* ptr){
 			printf("error_P  |");
 			printf("error_he |");
 			printf("  xdot   |");
-			printf("Des_alpha|");
+			printf("states|");
 			printf("\n");
 /*
 			fputs("α,", f1);
@@ -386,7 +386,7 @@ void* printf_loop(void* ptr){
 			printf("%7.3f  |", mb_state.error_position);
 			printf("%7.3f  |", mb_state.error_heading);
 			printf("%7.3f  |", mb_state.xdot);
-			printf("%7.3f  |", mb_state.desired_alpha);
+			printf("%d%d%d |", states[0], states[1],states[2]);
 		//Add Print stattements here, do not follow with /n
 			fflush(stdout);
 			fprintf(f1, "%lf,", mb_state.alpha);
@@ -406,7 +406,7 @@ void* printf_loop(void* ptr){
 			fprintf(f1, "%lf,", mb_state.error_position);
 			fprintf(f1, "%lf,", mb_state.error_heading);
 			fprintf(f1, "%lf,", mb_state.xdot);
-			fprintf(f1, "%lf,", mb_state.desired_alpha);
+			fprintf(f1, "%d%d%d,", states[0], states[1],states[2]);
 			fprintf(f1, "%lf,", mb_state.turn_pid_p);
 			fprintf(f1, "%lf,", mb_state.turn_pid_i);
 			fprintf(f1, "%lf,", mb_state.turn_pid_d);
@@ -450,3 +450,46 @@ int mb_load_setpoint_config(){
    
     return 0;
 }
+
+
+int get_motor_state()
+{
+	float tolerance_position = 0.1, tolerance_angle = 0.1;
+	if(mb_state.error_position < tolerance_position && mb_state.error_heading < tolerance_angle)
+		return 0; // idle state
+	else
+		return 1; // motion state
+}
+
+int get_rtr_state()
+{
+	switch(states[1])
+	{
+		case 0: return 1; // from idle state to rotation 1 state
+		case 1: return 2; // from idle rotation 1 to translation state
+		case 2: return 3; // from translation to rotation 2 state
+		case 3: return 0; // from rotation 2 to idle state
+		default: return 0;
+	}
+}
+
+int get_waypoint_state()
+{
+float tolerance_position = 0.01;
+	if(mb_odometry.x - mb_setpoints.position[0] < tolerance_position && mb_odometry.y - mb_setpoints.position[1] < tolerance_position)
+		return 0; // reached target
+	else
+		return 1; //not reached target yet
+}
+
+void statemachine()
+{
+	states[0] = get_motor_state();
+	if(states[0] == 0)
+		{
+			states[1] = get_rtr_state();
+			if(states[1] == 0)
+				states[2] = get_waypoint_state();
+		}
+}
+

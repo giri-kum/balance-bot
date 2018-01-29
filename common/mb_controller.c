@@ -157,9 +157,17 @@ int mb_controller_update(mb_state_t* mb_state, mb_setpoints_t* mb_setpoints){
     heading_true = 0;
     mb_state->theta_calc = atan2((mb_setpoints->position[1]-mb_state->odometry_y),(mb_setpoints->position[0]-mb_state->odometry_x));
     error_position = sqrt(pow(mb_setpoints->position[0]-mb_state->odometry_x,2) + pow(mb_setpoints->position[1]-mb_state->odometry_y,2));
+    if(mb_state->theta_calc < 0)
+    {
+        mb_state->theta_calc = mb_state->theta_calc + PI;
+        error_position = -1*error_position;
+    }
     error_heading = mb_state->theta_calc - mb_state->theta;
     error_heading = rc_march_filter(&heading_pid->dFilter, error_heading);
-
+    if(error_heading < 0.1)
+        error_heading = 0;
+    if(error_position < 0.1)
+        error_position = 0;
     // Sprite: Compute error for the outer loop
     if(mb_setpoints->manual_ctl!=1)
     {
