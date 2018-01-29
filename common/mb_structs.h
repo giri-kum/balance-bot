@@ -15,12 +15,12 @@ struct mb_state{
 
     //TODO: Add more variables to this state as needed
     // Sprite: added for debugging purposes
-    float   left_pid_p;
-    float   right_pid_p;
-    float   left_pid_i;
-    float   right_pid_i;
-    float   left_pid_d;
-    float   right_pid_d;
+    float   in_pid_p;
+    float   out_pid_p;
+    float   in_pid_i;
+    float   out_pid_i;
+    float   in_pid_d;
+    float   out_pid_d;
     float   error;
     float   xdot;
     float   desired_alpha;

@@ -134,7 +134,8 @@ void balancebot_controller(){
 	//mb_state.alpha = average_queue();
 	mb_state.theta = imu_data.dmp_TaitBryan[TB_YAW_Z];
 	fprintf(f, "%lf,", mb_state.alpha);
-	fprintf(f, "%lf\n", mb_state.left_pid_d);
+	fprintf(f, "%lf,", mb_state.in_pid_d);
+	fprintf(f, "%lf\n", mb_state.out_pid_d);
 	// Read encoders
 	mb_state.left_encoder = ENC_1_POL * rc_get_encoder_pos(1);
     mb_state.right_encoder = ENC_2_POL * rc_get_encoder_pos(2);
@@ -249,11 +250,11 @@ void* printf_loop(void* ptr){
 			printf("  CH5    |");*/
 			printf("  error  |");
 			printf("  L_P    |");
-			printf("  R_P    |");
+			printf("  out_P  |");
 			printf("  L_I    |");
-			printf("  R_I    |");
+			printf("  out_I  |");
 			printf("  L_D    |");
-			printf("  R_D    |");
+			printf("  out_D  |");
 			printf("  xdot   |");
 			printf("Des_alpha|");
 			printf("\n");
@@ -301,12 +302,12 @@ void* printf_loop(void* ptr){
 			printf("%7.3f  |", rc_get_dsm_ch_normalized(4));
 			printf("%7.3f  |", rc_get_dsm_ch_normalized(5));*/
 			printf("%7.3f  |", mb_state.error);
-			printf("%7.3f  |", mb_state.left_pid_p);
-			printf("%7.3f  |", mb_state.right_pid_p);
-			printf("%7.3f  |", mb_state.left_pid_i);
-			printf("%7.3f  |", mb_state.right_pid_i);
-			printf("%7.3f  |", mb_state.left_pid_d);
-			printf("%7.3f  |", mb_state.right_pid_d);
+			printf("%7.3f  |", mb_state.in_pid_p);
+			printf("%7.3f  |", mb_state.out_pid_p);
+			printf("%7.3f  |", mb_state.in_pid_i);
+			printf("%7.3f  |", mb_state.out_pid_i);
+			printf("%7.3f  |", mb_state.in_pid_d);
+			printf("%7.3f  |", mb_state.out_pid_d);
 			printf("%7.3f  |", mb_state.xdot);
 			printf("%7.3f  |", mb_state.desired_alpha);
 			fflush(stdout);
@@ -320,12 +321,12 @@ void* printf_loop(void* ptr){
 			fprintf(f1, "%lf,", mb_odometry.y);
 			fprintf(f1, "%lf,", mb_odometry.theta);
 			fprintf(f1, "%lf,", mb_state.error);
-			fprintf(f1, "%lf,", mb_state.left_pid_p);
-			fprintf(f1, "%lf,", mb_state.right_pid_p);
-			fprintf(f1, "%lf,", mb_state.left_pid_i);
-			fprintf(f1, "%lf,", mb_state.right_pid_i);
-			fprintf(f1, "%lf,", mb_state.left_pid_d);
-			fprintf(f1, "%lf,", mb_state.right_pid_d);
+			fprintf(f1, "%lf,", mb_state.in_pid_p);
+			fprintf(f1, "%lf,", mb_state.out_pid_p);
+			fprintf(f1, "%lf,", mb_state.in_pid_i);
+			fprintf(f1, "%lf,", mb_state.out_pid_i);
+			fprintf(f1, "%lf,", mb_state.in_pid_d);
+			fprintf(f1, "%lf,", mb_state.out_pid_d);
 			fprintf(f1, "%lf,", mb_state.xdot);
 			fprintf(f1, "%lf\n", mb_state.desired_alpha);
 		}

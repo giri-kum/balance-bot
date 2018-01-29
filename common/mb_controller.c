@@ -109,12 +109,12 @@ int mb_controller_update(mb_state_t* mb_state, mb_setpoints_t* mb_setpoints){
     
 
     // Sprite: for debugging purposes, PID terms for the inner loop
-    mb_state->right_pid_p = in_pid->pTerm;
-    mb_state->left_pid_p = in_pid->pTerm;
-    mb_state->right_pid_i = in_pid->iTerm;
-    mb_state->left_pid_i = in_pid->iTerm;
-    mb_state->right_pid_d = in_pid->dTerm;
-    mb_state->left_pid_d = in_pid->dTerm;
+    mb_state->in_pid_p = in_pid->pTerm;
+    mb_state->out_pid_p = out_pid->pTerm;
+    mb_state->in_pid_i = in_pid->iTerm;
+    mb_state->out_pid_i = out_pid->iTerm;
+    mb_state->in_pid_d = in_pid->dTerm;
+    mb_state->out_pid_d = out_pid->dTerm;
     mb_state->error = error;
     mb_state->desired_alpha = desired_alpha;
     return 0;
