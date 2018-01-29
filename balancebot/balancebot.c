@@ -15,7 +15,7 @@ int main(){
 	float sum = 0;
 	mb_setpoints.fwd_velocity = 0;
 	mb_setpoints.turn_velocity = 0;	
-	prev_imu_theta = 0;
+	
 	// always initialize cape library first
 	if(rc_initialize()){
 		fprintf(stderr,"ERROR: failed to initialize rc_initialize(), are you root?\n");
@@ -96,9 +96,17 @@ int main(){
 
 	printf("initializing odometry...\n");
 	if(use_optitrack == 1)
+	{
 		mb_initialize_odometry(&mb_odometry, mb_state.opti_x ,mb_state.opti_y,mb_state.opti_theta);
+	}
 	else
+	{
 		mb_initialize_odometry(&mb_odometry,0.0,0.0,0.0);
+	}
+	
+	//Sprite: initialize the first imu reading
+	prev_imu_theta = imu_data.dmp_TaitBryan[TB_YAW_Z];
+
 	printf("attaching imu interupt...\n");
 	rc_set_imu_interrupt_func(&balancebot_controller);
 
@@ -145,7 +153,7 @@ void balancebot_controller(){
 	mb_state.alpha = imu_data.dmp_TaitBryan[TB_PITCH_X];
 	// wrap angle
 	mb_state.alpha = wrap_angle(mb_state.alpha);
-	mb_state.imu_theta = wrap_angle(imu_data.dmp_TaitBryan[TB_YAW_Z]);
+	mb_state.imu_theta = imu_data.dmp_TaitBryan[TB_YAW_Z];
 
 	mb_state.imu_deltheta = (mb_state.imu_theta-prev_imu_theta);
 	prev_imu_theta = mb_state.imu_theta;
@@ -236,7 +244,7 @@ void* setpoint_control_loop(void* ptr){
 	 	}
 	 	else
 		{
-			printf("Joy stick off!!");
+			printf("Joy stick off!!\n");
 			mb_setpoints.manual_ctl = 0;
 			mb_setpoints.position[0]=0;
 			mb_setpoints.position[1]=0;
@@ -338,27 +346,6 @@ void* printf_loop(void* ptr){
 			printf("  xdot   |");
 			printf("states   |");
 			printf("\n");
-/*
-			fputs("α,", f1);
-			fputs("θ,", f1);
-			fputs("L Enc,", f1);
-			fputs("R Enc,", f1);
-			fputs("L_u,", f1);
-			fputs("R_u,", f1);
-			fputs("X,", f1);
-		    fputs("Y,", f1);
-			fputs("θ,", f1);
-			fputs("error,", f1);
-			fputs("L_P,", f1);
-			fputs("R_P,", f1);
-			fputs("L_I,", f1);
-			fputs("R_I,", f1);
-		    fputs("L_D,", f1);
-			fputs("R_D,", f1);
-			fputs("xdot,", f1);
-			fputs("Target_alpha", f1);
-		    fputs("\n", f1);
-*/
 		}
 		else if(new_state==PAUSED && last_state!=PAUSED){
 			printf("\nPAUSED\n");
@@ -441,8 +428,8 @@ int mb_load_setpoint_config()
         printf("Error opening setpoints.cfg\n");
     }
 				
-	fscanf(file,"%d", &total_waypoints);
-	
+	fscanf(file,"%d %f %f", &total_waypoints, &tolerance_position, &tolerance_angle);
+	printf("Waypoint setup %d, %f, %f\n", total_waypoints, tolerance_position, tolerance_angle);
 	for (int i = 0; i< total_waypoints; i++)			
 	    {
 	    	fscanf(file, "%f %f %f ", &mb_waypoints[i].position[0], &mb_waypoints[i].position[1],&mb_waypoints[i].heading);

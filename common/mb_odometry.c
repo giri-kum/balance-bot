@@ -32,6 +32,7 @@ void mb_update_odometry(mb_odometry_t* mb_odometry, mb_state_t* mb_state, int se
 	mb_odometry->x = mb_odometry->x + mb_odometry->del_x*cos(mb_odometry->theta) - mb_odometry->del_y*sin(mb_odometry->theta);
 	mb_odometry->y = mb_odometry->y + mb_odometry->del_x*sin(mb_odometry->theta) + mb_odometry->del_y*cos(mb_odometry->theta);
 	mb_state->odometry_deltheta = (dr-dl)/WHEEL_BASE;
+
 	diff = mb_state->imu_deltheta - mb_state->odometry_deltheta;
 
 	switch (sensor_scheme){

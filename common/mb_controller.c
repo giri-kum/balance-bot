@@ -21,6 +21,7 @@ int mb_initialize_controller(){
     heading_pid = PID_Init(heading_pid_params.kp, heading_pid_params.ki, heading_pid_params.kd, heading_pid_params.dFilterHz, SAMPLE_RATE_HZ);
     states = 2;
     waypoint_number = 0;
+    sign = 1.0;
     
     PID_SetOutputLimits(out_pid, -PI, PI);
     PID_SetIntegralLimits(out_pid, -PI/10, PI/10);
@@ -183,14 +184,30 @@ void statemachine(mb_state_t* mb_state, mb_setpoints_t* mb_setpoints)
 
 int get_rtr_state(mb_state_t* mb_state, mb_setpoints_t* mb_setpoints)
 {
-    float tolerance_position = 0.2, tolerance_angle = 0.1;
     mb_setpoints->heading = atan2((mb_setpoints->position[1]-mb_state->odometry_y),(mb_setpoints->position[0]-mb_state->odometry_x));
     mb_setpoints->distance = sqrt(pow(mb_setpoints->position[0]-mb_state->odometry_x,2) + pow(mb_setpoints->position[1]-mb_state->odometry_y,2));
-    if(mb_setpoints->heading < 0)
+    if (states == 0)
     {
-        mb_setpoints->heading = mb_setpoints->heading + PI;
-        mb_setpoints->distance = -1*mb_setpoints->distance;
+        if(mb_setpoints->heading < 0 && ((mb_setpoints->heading - mb_state->theta) < -PI/2 || (mb_setpoints->heading - mb_state->theta) > PI/2))
+        {
+            mb_setpoints->heading = mb_setpoints->heading + PI;
+            sign = -1.0;
+            mb_setpoints->distance = sign*mb_setpoints->distance;
+        }
+        else if (mb_setpoints->heading >= 0 && ((mb_setpoints->heading - mb_state->theta) < -PI/2 || (mb_setpoints->heading - mb_state->theta) > PI/2))
+        {
+            mb_setpoints->heading = mb_setpoints->heading - PI;
+            sign = -1.0;
+            mb_setpoints->distance = sign*mb_setpoints->distance;
+        }
+        else
+            sign = 1.0;
     }
+    else if (states == 1)
+    {
+        mb_setpoints->distance = sign*mb_setpoints->distance;
+    }
+
     
     switch(states)
     {
@@ -232,8 +249,6 @@ void position_controller(mb_state_t* mb_state, mb_setpoints_t* mb_setpoints)
     float error_position;
     int position_true = 0;
     error_position = mb_setpoints->distance;
-//    if(error_position < 0.1)
-//        error_position = 0;
     mb_setpoints->fwd_velocity = PID_Compute(position_pid, error_position, position_true);
     mb_state->position_pid_p = mb_setpoints->fwd_velocity;
     mb_state->error_position = error_position;
@@ -245,8 +260,6 @@ void heading_controller(mb_state_t* mb_state, mb_setpoints_t* mb_setpoints)
     int heading_true = 0;
     error_heading = mb_setpoints->heading - mb_state->theta;
     error_heading = rc_march_filter(&heading_pid->dFilter, error_heading);
-//    if(error_heading < 0.1)
-//        error_heading = 0;
     mb_setpoints->turn_velocity = PID_Compute(heading_pid, error_heading, heading_true);
     mb_state->heading_pid_p = mb_setpoints->turn_velocity;
     mb_state->error_heading = error_heading;
