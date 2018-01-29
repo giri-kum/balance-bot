@@ -22,6 +22,9 @@ int mb_initialize_controller(){
     PID_SetOutputLimits(out_pid, -PI, PI);
     PID_SetIntegralLimits(out_pid, -PI/10, PI/10);
 
+    PID_SetOutputLimits(out_pid, -PI/6, PI/6);
+    PID_SetIntegralLimits(turn_pid, -PI/10, PI/10);
+
     out_Filter = rc_empty_filter();
 
     float dt, time_constant;
@@ -145,7 +148,6 @@ int mb_controller_update(mb_state_t* mb_state, mb_setpoints_t* mb_setpoints){
 
     if (((mb_state->count % (outerloop_rate+1)) == 0) || ((mb_state->count % (outerloop_rate+1)) == outerloop_rate)){
         mb_state->desired_alpha = desired_alpha;
-        mb_state->count = 0;
     }
 
     // Sprite: Compute error for the inner loop
@@ -155,8 +157,13 @@ int mb_controller_update(mb_state_t* mb_state, mb_setpoints_t* mb_setpoints){
     output = compensate(PID_Compute(in_pid, error, out_true));
     turn_output = PID_Compute(turn_pid, error_turn, turn_true);
 
-    left_u = output+ turn_output;
-    right_u = output-turn_output;
+    if (((mb_state->count % (outerloop_rate+1)) == 0) || ((mb_state->count % (outerloop_rate+1)) == outerloop_rate)){
+        mb_state->turn_output = turn_output;
+        mb_state->count = 0;
+    }
+
+    left_u = output+ mb_state->turn_output;
+    right_u = output-mb_state->turn_output;
     if(left_u > 1)
         left_u = 1.0;
     else if(left_u < -1)

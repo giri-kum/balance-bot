@@ -35,6 +35,7 @@ struct mb_state{
     float   desired_alpha;
     float   equilibrium_point;
     int   count; //Sprite: added count for running outer-loop at a slower rate
+    float turn_output; //Sprite: added turn_output because now the velocity turning control loop is slower
 
 };
 
