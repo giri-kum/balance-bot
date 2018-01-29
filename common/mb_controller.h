@@ -17,7 +17,7 @@ pid_parameters_t out_pid_params;
 pid_parameters_t turn_pid_params;
 pid_parameters_t position_pid_params;
 pid_parameters_t heading_pid_params;
-
+int calibrate_imu;
 int out_queue_length;
 float out_filter_queue[100];
 int turn_queue_length;

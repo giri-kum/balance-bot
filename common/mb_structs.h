@@ -45,6 +45,7 @@ struct mb_state{
     float   turn_pid_d;
 
     float   error;
+    float   theta_calc;
     float   imu_deltheta;
     float   odometry_deltheta;
     float   desired_alpha;

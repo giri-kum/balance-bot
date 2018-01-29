@@ -151,14 +151,14 @@ int mb_controller_update(mb_state_t* mb_state, mb_setpoints_t* mb_setpoints){
     turn_true = 0;
     position_true = 0;
     heading_true = 0;
-    
+    mb_state->theta_calc = atan2((mb_setpoints->position[1]-mb_state->odometry_y),(mb_setpoints->position[0]-mb_state->odometry_x));
     // Sprite: Compute error for the outer loop
     if(mb_setpoints->manual_ctl!=1)
     {
  //       if (((mb_state->count % (outerloop_rate+1)) == 0) || ((mb_state->count % (outerloop_rate+1)) == outerloop_rate))
  //       {
             error_position = sqrt(pow(mb_setpoints->position[0]-mb_state->odometry_x,2) + pow(mb_setpoints->position[1]-mb_state->odometry_y,2));
-            error_heading = mb_state->theta + atan2((mb_setpoints->position[1]-mb_state->odometry_y),(mb_setpoints->position[0]-mb_state->odometry_x));
+            error_heading = mb_state->theta + mb_state->theta_calc;
             mb_setpoints->fwd_velocity = PID_Compute(position_pid, error_position, position_true);
             mb_setpoints->turn_velocity = PID_Compute(heading_pid, error_heading, heading_true);
 //        }
