@@ -56,6 +56,8 @@ void mb_update_odometry(mb_odometry_t* mb_odometry, mb_state_t* mb_state, int se
 	mb_state->xdot = mb_odometry->del_x/DT;
 	mb_state->thetadot = mb_odometry->final_deltheta/DT;
 	mb_state->theta = mb_odometry->theta;
+	mb_state->odometry_x = mb_odometry->x;
+	mb_state->odometry_y = mb_odometry->y;
 
 }
 

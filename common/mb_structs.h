@@ -12,7 +12,8 @@ struct mb_state{
     int     right_encoder;     // right encoder counts since last reading
     float   thetadot;           
     float   xdot;
-
+    float   odometry_x;
+    float   odometry_y;
     int     sensor_scheme;
     //outputs
     float   left_cmd;  //left wheel command [-1..1]
@@ -23,12 +24,17 @@ struct mb_state{
     float   in_pid_p;
     float   out_pid_p;
     float   turn_pid_p;
+    float   position_pid_p;
+    float   heading_pid_p;
+        
+
     float   in_pid_i;
     float   out_pid_i;
     float   turn_pid_i;
     float   in_pid_d;
     float   out_pid_d;
     float   turn_pid_d;
+
     float   error;
     float   imu_deltheta;
     float   odometry_deltheta;
@@ -36,6 +42,8 @@ struct mb_state{
     float   equilibrium_point;
     int   count; //Sprite: added count for running outer-loop at a slower rate
     float turn_output; //Sprite: added turn_output because now the velocity turning control loop is slower
+    float   error_position;
+    float   error_heading;
 
 };
 
@@ -44,6 +52,8 @@ struct mb_setpoints{
 
     float fwd_velocity; // fwd velocity in m/s
     float turn_velocity; // turn velocity in rad/s
+    float position[2];
+    float heading;
     int manual_ctl;
 };
 

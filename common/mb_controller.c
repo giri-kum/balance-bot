@@ -18,11 +18,16 @@ int mb_initialize_controller(){
     in_pid = PID_Init(in_pid_params.kp, in_pid_params.ki, in_pid_params.kd, in_pid_params.dFilterHz, SAMPLE_RATE_HZ); //defined in mb_defs.h
     out_pid = PID_Init(out_pid_params.kp, out_pid_params.ki, out_pid_params.kd, out_pid_params.dFilterHz, SAMPLE_RATE_HZ);
     turn_pid = PID_Init(turn_pid_params.kp, turn_pid_params.ki, turn_pid_params.kd, turn_pid_params.dFilterHz, SAMPLE_RATE_HZ);
+    position_pid = PID_Init(position_pid_params.kp, position_pid_params.ki, position_pid_params.kd, position_pid_params.dFilterHz, SAMPLE_RATE_HZ);
+    heading_pid = PID_Init(heading_pid_params.kp, heading_pid_params.ki, heading_pid_params.kd, heading_pid_params.dFilterHz, SAMPLE_RATE_HZ);
 
     PID_SetOutputLimits(out_pid, -PI, PI);
     PID_SetIntegralLimits(out_pid, -PI/10, PI/10);
 
-    PID_SetOutputLimits(out_pid, -PI/6, PI/6);
+    PID_SetOutputLimits(position_pid, -0.5, 0.5);
+    PID_SetOutputLimits(heading_pid, -1, 1);
+
+    PID_SetOutputLimits(turn_pid, -PI/6, PI/6);
     PID_SetIntegralLimits(turn_pid, -PI/10, PI/10);
 
     out_Filter = rc_empty_filter();
@@ -80,6 +85,18 @@ int mb_load_controller_config(){
         &turn_pid_params.kd,
         &turn_pid_params.dFilterHz
         );
+    fscanf(file, "%f %f %f %f",
+        &position_pid_params.kp,
+        &position_pid_params.ki,
+        &position_pid_params.kd,
+        &position_pid_params.dFilterHz
+        );
+    fscanf(file, "%f %f %f %f",
+        &heading_pid_params.kp,
+        &heading_pid_params.ki,
+        &heading_pid_params.kd,
+        &heading_pid_params.dFilterHz
+        );
 
     fscanf(file, "%f",&compensator);
     fscanf(file, "%f",&temp);
@@ -97,6 +114,8 @@ int mb_load_controller_config(){
     printf("in_pid %f, %f, %f, %f\n", in_pid_params.kp, in_pid_params.ki, in_pid_params.kd, in_pid_params.dFilterHz);
     printf("out_pid %f, %f, %f, %f\n", out_pid_params.kp, out_pid_params.ki, out_pid_params.kd, out_pid_params.dFilterHz);
     printf("turn_pid %f, %f, %f, %f\n", turn_pid_params.kp, turn_pid_params.ki, turn_pid_params.kd, turn_pid_params.dFilterHz);
+    printf("position_pid %f, %f, %f, %f\n", position_pid_params.kp, position_pid_params.ki, position_pid_params.kd, position_pid_params.dFilterHz);
+    printf("heading_pid %f, %f, %f, %f\n", heading_pid_params.kp, heading_pid_params.ki, heading_pid_params.kd, heading_pid_params.dFilterHz);
     printf("compensator %f\n", compensator);
     printf("out queue length %d\n", out_queue_length);
     printf("turn queue length %d\n", turn_queue_length);
@@ -125,12 +144,25 @@ int mb_controller_update(mb_state_t* mb_state, mb_setpoints_t* mb_setpoints){
     // Sprite:added mb_setpoints as one of the argument, fwd_velocity
 
     // Sprite: initialize local variables
-    float error, error_out, error_turn, output, desired_alpha, turn_output,left_u,right_u;
-    int in_true, out_true, turn_true;
+    float error, error_out, error_turn, error_position, error_heading, output, desired_alpha, turn_output,left_u,right_u;
+    int in_true, out_true, turn_true,position_true,heading_true;
     in_true = 1;
     out_true = 0;
     turn_true = 0;
+    position_true = 0;
+    heading_true = 0;
+    
     // Sprite: Compute error for the outer loop
+    if(mb_setpoints->manual_ctl!=1)
+    {
+ //       if (((mb_state->count % (outerloop_rate+1)) == 0) || ((mb_state->count % (outerloop_rate+1)) == outerloop_rate))
+ //       {
+            error_position = sqrt(pow(mb_setpoints->position[0]-mb_state->odometry_x,2) + pow(mb_setpoints->position[1]-mb_state->odometry_y,2));
+            error_heading = mb_state->theta + atan2((mb_setpoints->position[1]-mb_state->odometry_y),(mb_setpoints->position[0]-mb_state->odometry_x));
+            mb_setpoints->fwd_velocity = PID_Compute(position_pid, error_position, position_true);
+            mb_setpoints->turn_velocity = PID_Compute(heading_pid, error_heading, heading_true);
+//        }
+    }
     error_out = mb_setpoints->fwd_velocity - mb_state->xdot;
     error_turn = mb_setpoints->turn_velocity - mb_state->thetadot;
     error_out = rc_march_filter(&(out_Filter), error_out); 
@@ -189,6 +221,12 @@ int mb_controller_update(mb_state_t* mb_state, mb_setpoints_t* mb_setpoints){
     mb_state->out_pid_d = out_pid->dTerm;
     mb_state->turn_pid_d = turn_pid->dTerm;
     mb_state->error = error;
+
+    mb_state->heading_pid_p = heading_pid->pTerm;
+    mb_state->position_pid_p = position_pid->pTerm;
+    mb_state->error_heading = error_heading;
+    mb_state->error_position = error_position;
+
     return 0;
 }
 

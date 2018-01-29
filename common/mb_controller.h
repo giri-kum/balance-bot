@@ -15,6 +15,9 @@ float compensator;
 pid_parameters_t in_pid_params;
 pid_parameters_t out_pid_params;
 pid_parameters_t turn_pid_params;
+pid_parameters_t position_pid_params;
+pid_parameters_t heading_pid_params;
+
 int out_queue_length;
 float out_filter_queue[100];
 int turn_queue_length;
@@ -28,6 +31,8 @@ float median_queue(float *filter_queue, int queue_length);
 PID_t *in_pid;
 PID_t *out_pid;
 PID_t *turn_pid;
+PID_t *position_pid;
+PID_t *heading_pid;
 
 int sensor_scheme;
 float gyrodometry_threshold;

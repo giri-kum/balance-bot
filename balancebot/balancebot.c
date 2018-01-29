@@ -216,12 +216,18 @@ void* setpoint_control_loop(void* ptr){
 				}
 			else{ //Autonomous mode: set points are controlled by the code, it is zero for the time being.
 				mb_setpoints.manual_ctl = 0;
-				mb_setpoints.fwd_velocity = 0;
-				mb_setpoints.turn_velocity = 0;
+				mb_setpoints.position[0]=0;
+				mb_setpoints.position[1]=0;
+				mb_setpoints.heading=0;
 				}
 	 	}
 	 	else
 		{
+			printf("Joy stick off!!");
+			mb_setpoints.manual_ctl = 0;
+			mb_setpoints.position[0]=0;
+			mb_setpoints.position[1]=0;
+			mb_setpoints.heading=0;
 			mb_setpoints.fwd_velocity = 0;
 			mb_setpoints.turn_velocity = 0;	
 		}
@@ -264,10 +270,10 @@ void* printf_loop(void* ptr){
 			printf("  error  |");
 			printf("  in_P   |");
 			printf("  out_P  |");
-			printf("  in_I   |");
-			printf("  out_I  |");
-			printf("  in_D   |");
-			printf("  turn_D |");
+			printf("positionP|");
+			printf("heading_P|");
+			printf("error_P  |");
+			printf("error_he |");
 			printf("  xdot   |");
 			printf("Des_alpha|");
 			printf("\n");
@@ -314,10 +320,10 @@ void* printf_loop(void* ptr){
 			printf("%7.3f  |", mb_state.error);
 			printf("%7.3f  |", mb_state.in_pid_p);
 			printf("%7.3f  |", mb_state.out_pid_p);
-			printf("%7.3f  |", mb_state.in_pid_i);
-			printf("%7.3f  |", mb_state.out_pid_i);
-			printf("%7.3f  |", mb_state.in_pid_d);
-			printf("%7.3f  |", mb_state.turn_pid_d);
+			printf("%7.3f  |", mb_state.position_pid_p);
+			printf("%7.3f  |", mb_state.heading_pid_p);
+			printf("%7.3f  |", mb_state.error_position);
+			printf("%7.3f  |", mb_state.error_heading);
 			printf("%7.3f  |", mb_state.xdot);
 			printf("%7.3f  |", mb_state.desired_alpha);
 			fflush(stdout);
@@ -333,15 +339,17 @@ void* printf_loop(void* ptr){
 			fprintf(f1, "%lf,", mb_state.error);
 			fprintf(f1, "%lf,", mb_state.in_pid_p);
 			fprintf(f1, "%lf,", mb_state.out_pid_p);
-			fprintf(f1, "%lf,", mb_state.in_pid_i);
-			fprintf(f1, "%lf,", mb_state.out_pid_i);
-			fprintf(f1, "%lf,", mb_state.in_pid_d);
-			fprintf(f1, "%lf,", mb_state.out_pid_d);
+			fprintf(f1, "%lf,", mb_state.position_pid_p);
+			fprintf(f1, "%lf,", mb_state.heading_pid_p);
+			fprintf(f1, "%lf,", mb_state.error_position);
+			fprintf(f1, "%lf,", mb_state.error_heading);
 			fprintf(f1, "%lf,", mb_state.xdot);
 			fprintf(f1, "%lf,", mb_state.desired_alpha);
 			fprintf(f1, "%lf,", mb_state.turn_pid_p);
 			fprintf(f1, "%lf,", mb_state.turn_pid_i);
 			fprintf(f1, "%lf,", mb_state.turn_pid_d);
+			fprintf(f1, "%lf,", mb_state.position_pid_p);
+			fprintf(f1, "%lf,", mb_state.heading_pid_p);
 			fprintf(f1, "%lf,", mb_state.imu_deltheta);
 			fprintf(f1, "%lf,", mb_state.odometry_deltheta);
 			fprintf(f1, "%lf,", mb_odometry.final_deltheta);
