@@ -23,9 +23,15 @@ float turn_filter_queue[100];
 void intialize_queue(float value,float *filter_queue, int queue_length);
 float average_queue(float *filter_queue, int queue_length);
 void push_queue(float value,float *filter_queue, int queue_length);
+float median_queue(float *filter_queue, int queue_length);
 PID_t *in_pid;
 PID_t *out_pid;
 PID_t *turn_pid;
+
+
+float out_FilterHz;
+rc_filter_t out_Filter; 
+  
 
 
 #endif

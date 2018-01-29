@@ -8,6 +8,7 @@
 #include "../balancebot/balancebot.h"
 
 #define DTHETA_THRESH 0.001
+// #define XDOT_THRESH	  
 
 void mb_initialize_odometry(mb_odometry_t* mb_odometry, float x, float y, float theta){
 	mb_odometry->x = x;

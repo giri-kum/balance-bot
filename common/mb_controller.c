@@ -20,6 +20,12 @@ int mb_initialize_controller(){
     turn_pid = PID_Init(turn_pid_params.kp, turn_pid_params.ki, turn_pid_params.kd, turn_pid_params.dFilterHz, SAMPLE_RATE_HZ);
     PID_SetOutputLimits(out_pid, -PI, PI);
     PID_SetIntegralLimits(out_pid, -PI, PI);
+    out_Filter = rc_empty_filter(); 
+    float dt, time_constant;
+    dt = 1.0/(SAMPLE_RATE_HZ);
+    time_constant = 1.0/(TWO_PI*(out_FilterHz)); // Sprite: TWO_PI is defined in rc_usefulincludes.h, which is included in mb_pid.h
+    rc_first_order_lowpass(&(out_Filter), dt, time_constant); // Sprite: int rc_first_order_lowpass(rc_filter_t* f, float dt, float time_constant)
+
     return 0;
 }
 
@@ -70,6 +76,7 @@ int mb_load_controller_config(){
     out_queue_length = (int) temp;
     fscanf(file, "%f",&temp);
     turn_queue_length = (int) temp;
+    fscanf(file, "%f",&out_FilterHz);
     fclose(file);
 
     // Sprite: for debugging purposes
@@ -79,6 +86,7 @@ int mb_load_controller_config(){
     printf("compensator %f\n", compensator);
     printf("out queue length %d\n", out_queue_length);
     printf("turn queue length %d\n", turn_queue_length);
+    printf("out_FilterHz =  %f\n", out_FilterHz);
     return 0;
 }
 
@@ -100,28 +108,30 @@ int mb_controller_update(mb_state_t* mb_state, mb_setpoints_t* mb_setpoints){
 
     // Sprite: initialize local variables
     float error, error_out, error_turn, desired_alpha, output, turn_output,left_u,right_u;
-    int in_true;
+    int in_true, out_true, turn_true;
     in_true = 1;
+    out_true = 0;
+    turn_true = 0;
     // Sprite: Compute error for the outer loop
     error_out = mb_setpoints->fwd_velocity - mb_state->xdot;
-    error_turn = mb_setpoints->turn_velocity - mb_state->odometry_thetadot;
-
+    error_turn = mb_setpoints->turn_velocity - mb_state->imu_thetadot;
+    error_out = rc_march_filter(&(out_Filter), error_out); 
     // Sprite: Added filter for error_out (moving average of 30)
-    push_queue(error_out,out_filter_queue,out_queue_length);
-    error_out = average_queue(out_filter_queue,out_queue_length);
+ //   push_queue(error_out,out_filter_queue,out_queue_length);
+ //   error_out = average_queue(out_filter_queue,out_queue_length);
 
-    push_queue(error_turn,turn_filter_queue,turn_queue_length);
-    error_turn = average_queue(turn_filter_queue,turn_queue_length);
+ //   push_queue(error_turn,turn_filter_queue,turn_queue_length);
+ //   error_turn = average_queue(turn_filter_queue,turn_queue_length);
 
     // Sprite: Compute input (desired-alpha) for the inner loop
-    desired_alpha = mb_state->equilibrium_point - PID_Compute(out_pid, error_out, 0);
+    desired_alpha = mb_state->equilibrium_point - PID_Compute(out_pid, error_out, in_true);
 
     // Sprite: Compute error for the inner loop
     error = desired_alpha - mb_state->alpha;
 
     // Sprite: Compute PID output for the motor
-    output = compensate(PID_Compute(in_pid, error, in_true));
-    turn_output = PID_Compute(turn_pid, error_turn, 0);
+    output = compensate(PID_Compute(in_pid, error, out_true));
+    turn_output = PID_Compute(turn_pid, error_turn, turn_true);
  //   printf("turn_pid->dTerm = %lf and mb_state = %lf \n",turn_pid->dTerm,mb_state->turn_pid_d);
     left_u = output+ turn_output;
     right_u = output-turn_output;
@@ -212,6 +222,17 @@ void intialize_queue(float value,float *filter_queue, int queue_length)
 }
 
 float average_queue(float *filter_queue, int queue_length)
+{
+    float sum = 0;
+    int i = 0;
+    for (i = 0; i < queue_length; ++i)
+    {
+        sum += filter_queue[i];
+    }
+    return sum/queue_length;
+}
+
+float median_queue(float *filter_queue, int queue_length)
 {
     float sum = 0;
     int i = 0;
