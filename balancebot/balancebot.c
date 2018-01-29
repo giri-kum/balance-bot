@@ -5,7 +5,7 @@
 * 
 *******************************************************************************/
 #include "balancebot.h"
-float desired_alpha;
+
 /*******************************************************************************
 * int main() 
 *
@@ -65,8 +65,7 @@ int main(){
 
 	printf("initializing odometry...\n");
 	mb_initialize_odometry(&mb_odometry, 0.0,0.0,0.0);
-	desired_alpha = imu_data.dmp_TaitBryan[TB_PITCH_X];
-	printf("Desired alpha = %lf\n", desired_alpha );
+
 	printf("attaching imu interupt...\n");
 	rc_set_imu_interrupt_func(&balancebot_controller);
 
@@ -122,7 +121,7 @@ void balancebot_controller(){
     mb_update_odometry(&mb_odometry, &mb_state);
 
     // Calculate controller outputs
-    mb_controller_update(&mb_state,desired_alpha);
+    mb_controller_update(&mb_state);
 
     //unlock state mutex
     pthread_mutex_unlock(&state_mutex);
@@ -224,6 +223,8 @@ void* printf_loop(void* ptr){
 			printf("  R_I    |");
 			printf("  L_D    |");
 			printf("  R_D    |");
+			printf("  xdot   |");
+			printf("Des_alpha|");
 			printf("\n");
 			fputs("α,", f1);
 			fputs("θ,", f1);
@@ -241,6 +242,8 @@ void* printf_loop(void* ptr){
 			fputs("R_I,", f1);
 		    fputs("L_D,", f1);
 			fputs("R_D", f1);
+			fputs("xdot", f1);
+			fputs("Target_alpha", f1);
 		    fputs("\n", f1);
 		}
 		else if(new_state==PAUSED && last_state!=PAUSED){
@@ -268,6 +271,8 @@ void* printf_loop(void* ptr){
 			printf("%7.3f  |", mb_state.right_pid_i);
 			printf("%7.3f  |", mb_state.left_pid_d);
 			printf("%7.3f  |", mb_state.right_pid_d);
+			printf("%7.3f  |", mb_state.xdot);
+			printf("%7.3f  |", mb_state.desired_alpha);
 			fflush(stdout);
 			fprintf(f1, "%lf,", mb_state.alpha);
 			fprintf(f1, "%lf,", mb_state.theta);
@@ -284,8 +289,9 @@ void* printf_loop(void* ptr){
 			fprintf(f1, "%lf,", mb_state.left_pid_i);
 			fprintf(f1, "%lf,", mb_state.right_pid_i);
 			fprintf(f1, "%lf,", mb_state.left_pid_d);
-			fprintf(f1, "%lf\n", mb_state.right_pid_d);
-
+			fprintf(f1, "%lf,", mb_state.right_pid_d);
+			fprintf(f1, "%lf,", mb_state.xdot);
+			fprintf(f1, "%lf\n", mb_state.desired_alpha);
 		}
 		usleep(1000000 / PRINTF_HZ);
 	}

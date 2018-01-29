@@ -17,6 +17,9 @@ int mb_initialize_controller(){
     //Sprite:
     right_pid = PID_Init(right_pid_params.kp, right_pid_params.ki, right_pid_params.kd, right_pid_params.dFilterHz, SAMPLE_RATE_HZ); //defined in mb_defs.h
     left_pid = PID_Init(left_pid_params.kp, left_pid_params.ki, left_pid_params.kd, left_pid_params.dFilterHz, SAMPLE_RATE_HZ);
+    out_pid = PID_Init(out_pid_params.kp, out_pid_params.ki, out_pid_params.kd, out_pid_params.dFilterHz, SAMPLE_RATE_HZ);
+    PID_SetOutputLimits(out_pid, -0.3, 0.3);
+
     return 0;
 }
 
@@ -47,11 +50,6 @@ int mb_load_controller_config(){
         &left_pid_params.dFilterHz
         );
 
-    // Sprite: for debugging purposes
-    printf("%f, %f, %f, %f", left_pid_params.kp, left_pid_params.ki, left_pid_params.kd, left_pid_params.dFilterHz);
-
-
-
     fscanf(file, "%f %f %f %f",
         &right_pid_params.kp,
         &right_pid_params.ki,
@@ -59,7 +57,19 @@ int mb_load_controller_config(){
         &right_pid_params.dFilterHz
         );
 
+    fscanf(file, "%f %f %f %f",
+        &out_pid_params.kp,
+        &out_pid_params.kd,
+        &out_pid_params.ki,
+        &out_pid_params.dFilterHz
+        );
+
     fclose(file);
+
+    // Sprite: for debugging purposes
+    printf("left_pid %f, %f, %f, %f\n", left_pid_params.kp, left_pid_params.ki, left_pid_params.kd, left_pid_params.dFilterHz);
+    printf("out_pid %f, %f, %f, %f\n", out_pid_params.kp, out_pid_params.ki, out_pid_params.kd, out_pid_params.dFilterHz);
+
     return 0;
 }
 
@@ -74,11 +84,21 @@ int mb_load_controller_config(){
 *
 *******************************************************************************/
 
-int mb_controller_update(mb_state_t* mb_state, float desired_alpha){
+int mb_controller_update(mb_state_t* mb_state){
     //TODO: update your controller each timestep, called by 
     // the IMU interrupt function
     // Sprite:
-    float error;
+
+    float error, error_out, desired_alpha;
+    
+    error_out = 0.0 - mb_state->xdot;
+
+    desired_alpha = PI - PID_Compute(out_pid, error_out);
+
+    if (desired_alpha > PI){
+        desired_alpha = desired_alpha - TWO_PI;
+    }
+
     if (desired_alpha < 0){
         if (mb_state->alpha < 0){
             error = desired_alpha - (mb_state->alpha);
@@ -109,6 +129,7 @@ int mb_controller_update(mb_state_t* mb_state, float desired_alpha){
     mb_state->right_pid_d = right_pid->dTerm;
     mb_state->left_pid_d = left_pid->dTerm;
     mb_state->error = error;
+    mb_state->desired_alpha = desired_alpha;
     return 0;
 }
 

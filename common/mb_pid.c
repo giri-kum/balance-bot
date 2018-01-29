@@ -98,9 +98,13 @@ void PID_SetTunings(PID_t* pid, float Kp, float Ki, float Kd) {
 }
 
 void PID_SetOutputLimits(PID_t* pid, float min, float max){
+  pid->outputMin = min;
+  pid->outputMax = max; 
 }
 
 void PID_SetIntegralLimits(PID_t* pid, float min, float max){
+  pid->iTermMin = min;
+  pid->iTermMax = max;
 }
 
 void PID_ResetIntegrator(PID_t* pid){

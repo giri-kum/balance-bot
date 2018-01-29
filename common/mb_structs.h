@@ -23,6 +23,7 @@ struct mb_state{
     float   right_pid_d;
     float   error;
     float   xdot;
+    float   desired_alpha;
 };
 
 typedef struct mb_setpoints mb_setpoints_t;

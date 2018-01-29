@@ -8,14 +8,17 @@
 
 int mb_initialize_controller();
 int mb_load_controller_config();
-int mb_controller_update(mb_state_t* mb_state, float desired_alpha);
+int mb_controller_update(mb_state_t* mb_state);
 int mb_destroy_controller();
 
 pid_parameters_t left_pid_params;
 pid_parameters_t right_pid_params;
+pid_parameters_t out_pid_params;
 
 PID_t *right_pid;
 PID_t *left_pid;
+PID_t *out_pid;
+
 
 #endif
 
