@@ -24,7 +24,7 @@ mb_odometry_t mb_odometry;
 uint64_t current_time, start_time;
 FILE * f;
 int queue_length;
-float filter_queue[3];
+float filter_queue[100];
 // functions
 void balancebot_controller();
 void push_queue(float value);

@@ -24,6 +24,7 @@ struct mb_state{
     float   error;
     float   xdot;
     float   desired_alpha;
+    float   equilibrium_point;
 };
 
 typedef struct mb_setpoints mb_setpoints_t;

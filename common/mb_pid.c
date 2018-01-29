@@ -49,7 +49,7 @@ PID_t * PID_Init(float Kp, float Ki, float Kd, float dFilterHz, float updateHz) 
   return pid;
 }
 
-float PID_Compute(PID_t* pid, float error) {
+float PID_Compute(PID_t* pid, float error, int in_true) {
   // Sprite: set up some local variables for computation
   // Sprite: if needed, later will change dt to be real time
   float dt;
@@ -74,9 +74,12 @@ float PID_Compute(PID_t* pid, float error) {
 
   // Sprite: compute dTerm
   pid->dTerm = (pid->kd)*(((pid->pidInput) - (pid->prevInput))/dt);
-  // Sprite: go through the low-pass filter
-  // pid->dTerm = rc_march_filter(&(pid->dFilter), pid->dTerm); //Sprite: float rc_march_filter(rc_filter_t* f, float new_input)
 
+  // Sprite: go through the low-pass filter
+  if (in_true){
+    pid->dTerm = rc_march_filter(&(pid->dFilter), pid->dTerm); //Sprite: float rc_march_filter(rc_filter_t* f, float new_input)
+  }
+ 
   // Sprite: compute PID output
   pid->pidOutput = (pid->pTerm) + (pid->iTerm) + (pid->dTerm);
 

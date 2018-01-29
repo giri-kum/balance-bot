@@ -53,7 +53,7 @@ PID_t* PID_Init(
   float updateHz
   );
      
-float PID_Compute(PID_t* pid, float error);
+float PID_Compute(PID_t* pid, float error, int in_true);
 
 void PID_SetTunings(PID_t* pid, 
   float kp, 

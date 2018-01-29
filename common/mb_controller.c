@@ -12,7 +12,7 @@
 int mb_initialize_controller(){
 
     mb_load_controller_config();
-    dqueue_length = 50;
+    dqueue_length = 30;
     dintialize_queue(0);
     //TODO: initialize your controller here
     //Sprite:
@@ -87,22 +87,23 @@ int mb_controller_update(mb_state_t* mb_state, mb_setpoints_t* mb_setpoints){
 
     // Sprite: initialize local variables
     float error, error_out, desired_alpha, output;
-
+    int in_true;
+    in_true = 1;
     // Sprite: Compute error for the outer loop
     error_out = mb_setpoints->fwd_velocity - mb_state->xdot;
 
-    // Sprite: Added filter for error_out (moving average of 100)
+    // Sprite: Added filter for error_out (moving average of 30)
     dpush_queue(error_out);
     error_out = daverage_queue();
 
     // Sprite: Compute input (desired-alpha) for the inner loop
-    desired_alpha = PI - PID_Compute(out_pid, error_out);
+    desired_alpha = mb_state->equilibrium_point - PID_Compute(out_pid, error_out, 0);
 
     // Sprite: Compute error for the inner loop
     error = desired_alpha - mb_state->alpha;
 
     // Sprite: Compute PID output for the motor
-    output = compensate(PID_Compute(in_pid, error));
+    output = compensate(PID_Compute(in_pid, error, in_true));
     mb_state->right_cmd = ((float) ENC_1_POL)*SPEED_RATIO*output;
     mb_state->left_cmd = ((float) ENC_2_POL)*output;
     

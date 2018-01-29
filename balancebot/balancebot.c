@@ -11,7 +11,9 @@
 *
 *******************************************************************************/
 int main(){
-	queue_length = 3;
+	int iter = 0;
+	queue_length = 100;
+
 	intialize_queue(0);
 	mb_setpoints.fwd_velocity = 0;
 	mb_setpoints.turn_velocity = 0;	
@@ -53,7 +55,15 @@ int main(){
 	}
 
 	rc_nanosleep(10E9); // wait for imu to stabilize
-	intialize_queue(wrap_angle(imu_data.dmp_TaitBryan[TB_PITCH_X]));
+	printf("Calibrating for equilibrium position \n");
+	for(iter = 0; iter < queue_length; iter++)
+		{		
+				push_queue(wrap_angle(imu_data.dmp_TaitBryan[TB_PITCH_X]));
+				rc_nanosleep(20E6);
+		}
+	mb_state.equilibrium_point = average_queue();
+	printf("Calibration completed: %lf \n",mb_state.equilibrium_point);
+	
 	//initialize state mutex
     pthread_mutex_init(&state_mutex, NULL);
 
@@ -123,7 +133,8 @@ void balancebot_controller(){
 	push_queue(mb_state.alpha);
 	//mb_state.alpha = average_queue();
 	mb_state.theta = imu_data.dmp_TaitBryan[TB_YAW_Z];
-	fprintf(f, "%lf\n", mb_state.alpha);
+	fprintf(f, "%lf,", mb_state.alpha);
+	fprintf(f, "%lf\n", mb_state.left_pid_d);
 	// Read encoders
 	mb_state.left_encoder = ENC_1_POL * rc_get_encoder_pos(1);
     mb_state.right_encoder = ENC_2_POL * rc_get_encoder_pos(2);
@@ -246,6 +257,7 @@ void* printf_loop(void* ptr){
 			printf("  xdot   |");
 			printf("Des_alpha|");
 			printf("\n");
+/*
 			fputs("α,", f1);
 			fputs("θ,", f1);
 			fputs("L Enc,", f1);
@@ -261,10 +273,11 @@ void* printf_loop(void* ptr){
 			fputs("L_I,", f1);
 			fputs("R_I,", f1);
 		    fputs("L_D,", f1);
-			fputs("R_D", f1);
-			fputs("xdot", f1);
+			fputs("R_D,", f1);
+			fputs("xdot,", f1);
 			fputs("Target_alpha", f1);
 		    fputs("\n", f1);
+*/
 		}
 		else if(new_state==PAUSED && last_state!=PAUSED){
 			printf("\nPAUSED\n");
