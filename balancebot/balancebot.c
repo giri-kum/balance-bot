@@ -107,6 +107,16 @@ int main(){
 	//Sprite: initialize the first imu reading
 	prev_imu_theta = imu_data.dmp_TaitBryan[TB_YAW_Z];
 
+	//Sprite: obtain the gates positions
+	f_gates = fopen("gates.dat", "w");
+	int j = 0;
+	for (j = 0; j < (mb_state.bb_msg->num_gates); j++)
+	{
+		fprintf(f_gates, "%lf, %lf,", mb_state.bb_msg->gates[j].left_post[0],mb_state.bb_msg->gates[j].left_post[1]);
+		fprintf(f_gates, "%lf, %lf\n", mb_state.bb_msg->gates[j].right_post[0],mb_state.bb_msg->gates[j].right_post[1]);
+	}
+	
+
 	printf("attaching imu interupt...\n");
 	rc_set_imu_interrupt_func(&balancebot_controller);
 
@@ -129,7 +139,8 @@ int main(){
 	// exit cleanly
 	mb_disable_motors();
 	rc_cleanup();
-	fclose(f); 
+	fclose(f);
+	fclose(f_gates); 
 	return 0;
 }
 
@@ -194,18 +205,6 @@ void balancebot_controller(){
     mb_set_motor(RIGHT_MOTOR, mb_state.right_cmd);
     mb_set_motor(LEFT_MOTOR, mb_state.left_cmd);
     
-    // Sprite: commented out for debugging purposese, uncomment later
-   /*  if(!mb_setpoints.manual_ctl){
-     	mb_set_motor(RIGHT_MOTOR, mb_state.right_cmd);
-   	 	mb_set_motor(LEFT_MOTOR, mb_state.left_cmd);
-   	 }
-
-     if(mb_setpoints.manual_ctl){
-     	mb_set_motor(RIGHT_MOTOR, mb_setpoints.fwd_velocity + mb_setpoints.turn_velocity);
-   	 	mb_set_motor(LEFT_MOTOR, mb_setpoints.fwd_velocity - mb_setpoints.turn_velocity);
-   	 }
-    
-*/
     // TODO: Set motor velocities
 	
 

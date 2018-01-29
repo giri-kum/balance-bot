@@ -85,7 +85,7 @@ int main(int argc, char** argv)
                 int i;
                 for(i=0;i<3;i++){
                     m[i][0] = msg.markers[i].x;
-                    m[i][1] = msg.markers[i].z;
+                    m[i][1] = -msg.markers[i].z;
                     //printf("Marker %d: (%f, %f)\n",i,m[i][0],m[i][1]);
                 }
                 for(i=0; i<2;i++){

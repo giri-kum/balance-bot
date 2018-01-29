@@ -31,6 +31,7 @@ mb_odometry_t mb_odometry;
 float prev_imu_theta;
 uint64_t current_time, start_time;
 FILE * f;
+FILE * f_gates;
 
 
 //lcm variables
