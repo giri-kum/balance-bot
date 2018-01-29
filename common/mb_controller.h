@@ -45,13 +45,14 @@ float sign;
 int waypoint_number;
 int sensor_scheme;
 int use_optitrack;
+int competition;
 float gyrodometry_threshold;
 float out_FilterHz;
 float turn_FilterHz;
 rc_filter_t out_Filter;
 rc_filter_t turn_Filter; 
   
-
+float max_fwd, max_turn;
 // State machine
 int states;
 //int get_robot_state(mb_state_t* mb_state, mb_setpoints_t* mb_setpoints);

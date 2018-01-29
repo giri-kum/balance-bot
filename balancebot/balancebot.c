@@ -15,7 +15,7 @@ int main(){
 	float sum = 0;
 	mb_setpoints.fwd_velocity = 0;
 	mb_setpoints.turn_velocity = 0;	
-	
+	opti_count = 0;
 	// always initialize cape library first
 	if(rc_initialize()){
 		fprintf(stderr,"ERROR: failed to initialize rc_initialize(), are you root?\n");
@@ -56,8 +56,8 @@ int main(){
 		fprintf(stderr,"ERROR: can't talk to IMU! Exiting.\n");
 		return -1;
 	}
+	mb_load_controller_config(); //Reading from pid.cfg file
 	mb_load_setpoint_config();
-    mb_load_controller_config(); //Reading from pid.cfg file
     printf("setpoints %f, %f, %f\n", mb_setpoints.position[0],mb_setpoints.position[1],mb_setpoints.heading);
 	rc_nanosleep(10E9); // wait for imu to stabilize
 	if(calibrate_imu - 1.0 < 0.0001)
@@ -106,16 +106,17 @@ int main(){
 	
 	//Sprite: initialize the first imu reading
 	prev_imu_theta = imu_data.dmp_TaitBryan[TB_YAW_Z];
-
-	//Sprite: obtain the gates positions
-	f_gates = fopen("gates.dat", "w");
-	int j = 0;
-	for (j = 0; j < (mb_state.bb_msg->num_gates); j++)
+	if(use_optitrack==1)
 	{
-		fprintf(f_gates, "%lf, %lf,", mb_state.bb_msg->gates[j].left_post[0],mb_state.bb_msg->gates[j].left_post[1]);
-		fprintf(f_gates, "%lf, %lf\n", mb_state.bb_msg->gates[j].right_post[0],mb_state.bb_msg->gates[j].right_post[1]);
+		//Sprite: obtain the gates positions
+		f_gates = fopen("gates.dat", "w");
+		int j = 0;
+		for (j = 0; j < (mb_state.bb_msg->num_gates); j++)
+		{
+			fprintf(f_gates, "%lf, %lf,", mb_state.bb_msg->gates[j].left_post[0],mb_state.bb_msg->gates[j].left_post[1]);
+			fprintf(f_gates, "%lf, %lf\n", mb_state.bb_msg->gates[j].right_post[0],mb_state.bb_msg->gates[j].right_post[1]);
+		}
 	}
-	
 
 	printf("attaching imu interupt...\n");
 	rc_set_imu_interrupt_func(&balancebot_controller);
@@ -239,6 +240,17 @@ void* setpoint_control_loop(void* ptr){
 				}
 			else{ //Autonomous mode: set points are controlled by the code, it is zero for the time being.
 				mb_setpoints.manual_ctl = 0;
+				if(waypoint_number == -2 &&use_optitrack == 1)
+					{
+						if(opti_count == 25)	
+						{
+							mb_initialize_odometry(&mb_odometry, mb_state.opti_x ,mb_state.opti_y,mb_state.opti_theta);
+							opti_count = 0;
+							waypoint_number = 0;
+						}
+						else
+							opti_count++;
+					}
 				}
 	 	}
 	 	else
@@ -422,7 +434,30 @@ float wrap_angle(float value)
 
 int mb_load_setpoint_config()
 {   
-    FILE* file = fopen("setpoints.cfg", "r");
+	char *fname = "setpoints1.cfg";
+	switch(competition)
+	{
+		case 1:
+				{
+				 fname = "setpoints1.cfg";
+				 break;
+				}
+		case 2:
+				{
+				 fname = "setpoints2.cfg";
+				 break;
+				}
+		case 4:
+				{
+				 fname = "setpoints4.cfg";
+				 break;
+				}
+		default:{
+				 fname = "setpoints1.cfg";
+				 break;
+				}
+	}
+    FILE* file = fopen(fname, "r");
     if (file == NULL){
         printf("Error opening setpoints.cfg\n");
     }

@@ -32,7 +32,7 @@ float prev_imu_theta;
 uint64_t current_time, start_time;
 FILE * f;
 FILE * f_gates;
-
+int opti_count; 
 
 //lcm variables
 lcm_t * lcm;

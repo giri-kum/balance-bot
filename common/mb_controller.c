@@ -22,8 +22,8 @@ int mb_initialize_controller(){
     states = 2;
     waypoint_number = 0;
     sign = 1.0;
-    PID_SetOutputLimits(position_pid, -0.7, 0.7);
-    PID_SetOutputLimits(heading_pid, -1.5, 1.5);
+    PID_SetOutputLimits(position_pid, -max_fwd, max_fwd);
+    PID_SetOutputLimits(heading_pid, -max_turn, max_turn);
     
     PID_SetOutputLimits(out_pid, -PI, PI);
     PID_SetIntegralLimits(out_pid, -PI/10, PI/10);
@@ -112,6 +112,8 @@ int mb_load_controller_config(){
     fscanf(file, "%f",&gyrodometry_threshold);
     fscanf(file, "%f",&calibrate_imu);
     fscanf(file, "%d",&use_optitrack);
+    fscanf(file, "%d",&competition);
+    fscanf(file, "%f %f",&max_fwd, &max_turn);
     fclose(file);
 
     // Sprite: for debugging purposes
@@ -130,6 +132,8 @@ int mb_load_controller_config(){
     printf("gyrodometry_threshold =  %f\n", gyrodometry_threshold);
     printf("calibrate_imu =  %f\n", calibrate_imu);
     printf("use_optitrack =  %d\n", use_optitrack);
+    printf("competition =  %d\n", competition);
+    printf("max_fwd =  %f, max_turn = %f \n", max_fwd,max_turn);
     return 0;
 }
 
@@ -149,7 +153,7 @@ int mb_controller_update(mb_state_t* mb_state, mb_setpoints_t* mb_setpoints){
     // the IMU interrupt function
     if(mb_setpoints->manual_ctl!=1) // autonomous control
     {
-        if(waypoint_number != -1)
+        if(waypoint_number >= 0)
             statemachine(mb_state,mb_setpoints);
     }
     
@@ -163,9 +167,16 @@ void statemachine(mb_state_t* mb_state, mb_setpoints_t* mb_setpoints)
     {
         if(waypoint_number == total_waypoints)
             {
-                waypoint_number = -1;
-                mb_setpoints->fwd_velocity = 0;
-                mb_setpoints->turn_velocity = 0;
+                if(competition == 4)  
+                    waypoint_number = -2;
+                else if (competition == 1)
+                    waypoint_number = 0;
+                else
+                    {
+                        waypoint_number = -1;
+                        mb_setpoints->fwd_velocity = 0;
+                        mb_setpoints->turn_velocity = 0;
+                    }
             }
         else
             {
