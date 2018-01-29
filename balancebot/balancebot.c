@@ -235,8 +235,10 @@ void* setpoint_control_loop(void* ptr){
 				{
 					mb_setpoints.manual_ctl = 1;
 					temp = FWD_VEL_SENSITIVITY * rc_get_dsm_ch_normalized(3);
-					if( temp > 0.75 || temp < -0.75)
+					if( temp > 0.75)
 						temp = 0.75;
+					else if (temp < -0.75)
+						temp = -0.75;
 					mb_setpoints.fwd_velocity = temp;
 					mb_setpoints.turn_velocity = TURN_VEL_SENSITIVITY * rc_get_dsm_ch_normalized(4);
 					states = 0;
@@ -277,12 +279,16 @@ void* setpoint_control_loop(void* ptr){
 	 	else
 		{
 			printf("Joy stick off!!\n");
-			mb_setpoints.manual_ctl = 0;
-			mb_setpoints.position[0]=0;
-			mb_setpoints.position[1]=0;
-			mb_setpoints.heading=0;
-			mb_setpoints.fwd_velocity = 0;
-			mb_setpoints.turn_velocity = 0;	
+			
+			if(competition != 2 && competition != 4)
+			{
+				mb_setpoints.manual_ctl = 0;
+				mb_setpoints.position[0]=0;
+				mb_setpoints.position[1]=0;
+				mb_setpoints.heading=0;
+				mb_setpoints.fwd_velocity = 0;
+				mb_setpoints.turn_velocity = 0;	
+			}
 		}
 	 	usleep(1000000 / RC_CTL_HZ);
 	}

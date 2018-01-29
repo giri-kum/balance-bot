@@ -171,6 +171,8 @@ void statemachine(mb_state_t* mb_state, mb_setpoints_t* mb_setpoints)
                     waypoint_number = -2;
                 else if (competition == 1)
                     waypoint_number = 0;
+                else if (competition == 2)
+                    waypoint_number = 0;
                 else
                     {
                         waypoint_number = -1;
@@ -294,11 +296,10 @@ void position_controller(mb_state_t* mb_state, mb_setpoints_t* mb_setpoints)
         else if (error_position < -0.3||error_position > 0.3)
         {
             mb_setpoints->fwd_velocity = PID_Compute(position_pid, error_position, position_true);
-        }
-        
+        }  
         else
         {
-            mb_setpoints->fwd_velocity = 0.7* PID_Compute(position_pid, error_position, position_true);
+            mb_setpoints->fwd_velocity = 0.7 * PID_Compute(position_pid, error_position, position_true);
         }
     }
     else
