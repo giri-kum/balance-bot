@@ -398,9 +398,9 @@ void* printf_loop(void* ptr){
 			fprintf(f1, "%lf,", mb_odometry.x);
 			fprintf(f1, "%lf,", mb_odometry.y);
 			fprintf(f1, "%lf,", mb_odometry.theta);
-			fprintf(f1, "%lf,", mb_state.error);
-			fprintf(f1, "%lf,", mb_state.in_pid_p);
-			fprintf(f1, "%lf,", mb_state.out_pid_p);
+			fprintf(f1, "%lf,", mb_state.opti_x);
+			fprintf(f1, "%lf,", mb_state.opti_y);
+			fprintf(f1, "%lf,", mb_state.opti_theta);
 			fprintf(f1, "%lf,", mb_state.position_pid_p);
 			fprintf(f1, "%lf,", mb_state.heading_pid_p);
 			fprintf(f1, "%lf,", mb_state.error_position);
