@@ -196,7 +196,9 @@ int get_rtr_state(mb_state_t* mb_state, mb_setpoints_t* mb_setpoints)
 {
     mb_setpoints->heading = atan2((mb_setpoints->position[1]-mb_state->odometry_y),(mb_setpoints->position[0]-mb_state->odometry_x));
     mb_setpoints->distance = sqrt(pow(mb_setpoints->position[0]-mb_state->odometry_x,2) + pow(mb_setpoints->position[1]-mb_state->odometry_y,2));
-      if(mb_setpoints->heading < 0 && ((mb_setpoints->heading - mb_state->theta) < -PI/2 || (mb_setpoints->heading - mb_state->theta) > PI/2))
+    if(competition != 1)
+    {
+        if(mb_setpoints->heading < 0 && ((mb_setpoints->heading - mb_state->theta) < -PI/2 || (mb_setpoints->heading - mb_state->theta) > PI/2))
         {
             mb_setpoints->heading = mb_setpoints->heading + PI;
             sign = -1.0;
@@ -210,7 +212,32 @@ int get_rtr_state(mb_state_t* mb_state, mb_setpoints_t* mb_setpoints)
         }
         else
             sign = 1.0;
-    
+    }
+    else
+    {
+        if (states == 0)
+        {
+            if(mb_setpoints->heading < 0 && ((mb_setpoints->heading - mb_state->theta) < -PI/2 || (mb_setpoints->heading - mb_state->theta) > PI/2))
+            {
+                mb_setpoints->heading = mb_setpoints->heading + PI;
+                sign = -1.0;
+                mb_setpoints->distance = sign*mb_setpoints->distance;
+            }
+            else if (mb_setpoints->heading >= 0 && ((mb_setpoints->heading - mb_state->theta) < -PI/2 || (mb_setpoints->heading - mb_state->theta) > PI/2))
+            {
+                mb_setpoints->heading = mb_setpoints->heading - PI;
+                sign = -1.0;
+                mb_setpoints->distance = sign*mb_setpoints->distance;
+            }
+            else
+                sign = 1.0;
+        }
+        else if (states == 1)
+        {
+            mb_setpoints->distance = sign*mb_setpoints->distance;
+        }
+
+    }
 
     
     switch(states)
@@ -254,7 +281,7 @@ void position_controller(mb_state_t* mb_state, mb_setpoints_t* mb_setpoints)
     float error_position;
     int position_true = 0;
     error_position = mb_setpoints->distance;
-    if(competition!=1)
+    if(competition!=-1)
     {
         if(error_position < -9.5 || error_position > 9.5)
         {
@@ -271,7 +298,7 @@ void position_controller(mb_state_t* mb_state, mb_setpoints_t* mb_setpoints)
         
         else
         {
-            mb_setpoints->fwd_velocity = 0.5* PID_Compute(position_pid, error_position, position_true);
+            mb_setpoints->fwd_velocity = 0.7* PID_Compute(position_pid, error_position, position_true);
         }
     }
     else
