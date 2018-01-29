@@ -240,16 +240,23 @@ void* setpoint_control_loop(void* ptr){
 				}
 			else{ //Autonomous mode: set points are controlled by the code, it is zero for the time being.
 				mb_setpoints.manual_ctl = 0;
-				if(waypoint_number == -2 &&use_optitrack == 1)
+				if(waypoint_number == -2)
 					{
-						if(opti_count == 25)	
+						if(use_optitrack == 1)
 						{
-							mb_initialize_odometry(&mb_odometry, mb_state.opti_x ,mb_state.opti_y,mb_state.opti_theta);
-							opti_count = 0;
-							waypoint_number = 0;
+								if(opti_count == 25)	
+							{
+								mb_initialize_odometry(&mb_odometry, mb_state.opti_x ,mb_state.opti_y,mb_state.opti_theta);
+								opti_count = 0;
+								waypoint_number = 0;
+							}
+							else
+								opti_count++;
 						}
 						else
-							opti_count++;
+						{
+							waypoint_number = 0;
+						}
 					}
 				}
 	 	}
