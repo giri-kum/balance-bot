@@ -5,7 +5,8 @@ typedef struct mb_state mb_state_t;
 struct mb_state{
     // raw sensor inputs
     float   alpha;             // body angle (rad)
-    float   theta;             // heading  (rad)
+    float   imu_theta;             // heading  (rad)
+    float   odometry_theta;             // heading  (rad)
     int     left_encoder;      // left encoder counts since last reading
     int     right_encoder;     // right encoder counts since last reading
 
@@ -26,7 +27,8 @@ struct mb_state{
     float   turn_pid_d;
     float   error;
     float   xdot;
-    float   thetadot;
+    float   imu_thetadot;
+    float   odometry_thetadot;
     float   desired_alpha;
     float   equilibrium_point;
 };

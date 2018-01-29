@@ -15,6 +15,7 @@ int main(){
 	float sum = 0;
 	mb_setpoints.fwd_velocity = 0;
 	mb_setpoints.turn_velocity = 0;	
+	prev_imu_theta = 0;
 	// always initialize cape library first
 	if(rc_initialize()){
 		fprintf(stderr,"ERROR: failed to initialize rc_initialize(), are you root?\n");
@@ -60,6 +61,7 @@ int main(){
 				rc_nanosleep(20E6);
 		}
 	mb_state.equilibrium_point = sum/100;
+	prev_imu_theta = mb_state.equilibrium_point;
 	printf("Calibration completed: %lf \n",mb_state.equilibrium_point);
 	
 	//initialize state mutex
@@ -128,11 +130,14 @@ void balancebot_controller(){
 	mb_state.alpha = imu_data.dmp_TaitBryan[TB_PITCH_X];
 	// wrap angle
 	mb_state.alpha = wrap_angle(mb_state.alpha);
-	mb_state.theta = imu_data.dmp_TaitBryan[TB_YAW_Z];
+	mb_state.imu_theta = imu_data.dmp_TaitBryan[TB_YAW_Z];
+	mb_state.imu_thetadot = (mb_state.imu_theta-prev_imu_theta)*SAMPLE_RATE_HZ;
 	fprintf(f, "%lf,", mb_state.alpha);
-	fprintf(f, "%lf,", mb_state.theta);
+	fprintf(f, "%lf,", mb_state.imu_theta);
+	fprintf(f, "%lf,", mb_state.odometry_theta);
 	fprintf(f, "%lf,", mb_state.xdot);
-	fprintf(f, "%lf,", mb_state.thetadot);
+	fprintf(f, "%lf,", mb_state.imu_thetadot);
+	fprintf(f, "%lf,", mb_state.odometry_thetadot);
 	fprintf(f, "%lf,", mb_state.in_pid_d);
 	fprintf(f, "%lf,", mb_state.out_pid_d);
 	fprintf(f, "%lf\n", mb_state.turn_pid_d);
@@ -287,7 +292,7 @@ void* printf_loop(void* ptr){
 			printf("\r");
 			//Add Print statements here, do not follow with /n
 			printf("%7.3f  |", mb_state.alpha);
-			printf("%7.3f  |", mb_state.theta);
+			printf("%7.3f  |", mb_state.imu_theta);
 			printf("%7d  |", mb_state.left_encoder);
 			printf("%7d  |", mb_state.right_encoder);
 			printf("%7.3f  |", mb_state.left_cmd);
@@ -306,7 +311,7 @@ void* printf_loop(void* ptr){
 			printf("%7.3f  |", mb_state.desired_alpha);
 			fflush(stdout);
 			fprintf(f1, "%lf,", mb_state.alpha);
-			fprintf(f1, "%lf,", mb_state.theta);
+			fprintf(f1, "%lf,", mb_state.imu_theta);
 			fprintf(f1, "%d,", mb_state.left_encoder);
 			fprintf(f1, "%d,", mb_state.right_encoder);
 			fprintf(f1, "%lf,", mb_state.left_cmd);
@@ -326,7 +331,8 @@ void* printf_loop(void* ptr){
 			fprintf(f1, "%lf,", mb_state.turn_pid_p);
 			fprintf(f1, "%lf,", mb_state.turn_pid_i);
 			fprintf(f1, "%lf,", mb_state.turn_pid_d);
-			fprintf(f1, "%lf\n", mb_state.thetadot);
+			fprintf(f1, "%lf,", mb_state.imu_thetadot);
+			fprintf(f1, "%lf\n", mb_state.odometry_thetadot);
 
 		}
 		usleep(1000000 / PRINTF_HZ);

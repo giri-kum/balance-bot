@@ -104,7 +104,7 @@ int mb_controller_update(mb_state_t* mb_state, mb_setpoints_t* mb_setpoints){
     in_true = 1;
     // Sprite: Compute error for the outer loop
     error_out = mb_setpoints->fwd_velocity - mb_state->xdot;
-    error_turn = mb_setpoints->turn_velocity - mb_state->thetadot;
+    error_turn = mb_setpoints->turn_velocity - mb_state->odometry_thetadot;
 
     // Sprite: Added filter for error_out (moving average of 30)
     push_queue(error_out,out_filter_queue,out_queue_length);

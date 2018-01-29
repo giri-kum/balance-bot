@@ -20,7 +20,7 @@ pthread_mutex_t state_mutex;
 mb_state_t mb_state;
 mb_setpoints_t mb_setpoints;
 mb_odometry_t mb_odometry;
-
+float prev_imu_theta;
 uint64_t current_time, start_time;
 FILE * f;
 // functions
