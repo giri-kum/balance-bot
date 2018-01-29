@@ -220,7 +220,7 @@ void balancebot_controller(){
 *
 *******************************************************************************/
 void* setpoint_control_loop(void* ptr){
-
+	float temp;
 	// start dsm listener for radio control
 	rc_initialize_dsm();
 
@@ -233,7 +233,10 @@ void* setpoint_control_loop(void* ptr){
 			if(rc_get_dsm_ch_normalized(5) > 0.0)
 				{
 					mb_setpoints.manual_ctl = 1;
-					mb_setpoints.fwd_velocity = FWD_VEL_SENSITIVITY * rc_get_dsm_ch_normalized(3);
+					temp = FWD_VEL_SENSITIVITY * rc_get_dsm_ch_normalized(3);
+					if( temp > 0.75 || temp < -0.75)
+						temp = 0.75;
+					mb_setpoints.fwd_velocity = temp;
 					mb_setpoints.turn_velocity = TURN_VEL_SENSITIVITY * rc_get_dsm_ch_normalized(4);
 					states = 0;
 					waypoint_number = 0;
