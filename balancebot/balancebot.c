@@ -122,7 +122,7 @@ int main(){
 *******************************************************************************/
 void balancebot_controller(){
 	
-	
+		
 
 	//lock state mutex
 	pthread_mutex_lock(&state_mutex);
@@ -130,8 +130,11 @@ void balancebot_controller(){
 	mb_state.alpha = imu_data.dmp_TaitBryan[TB_PITCH_X];
 	// wrap angle
 	mb_state.alpha = wrap_angle(mb_state.alpha);
-	mb_state.imu_theta = imu_data.dmp_TaitBryan[TB_YAW_Z];
+	mb_state.imu_theta = wrap_angle(imu_data.dmp_TaitBryan[TB_YAW_Z]);
 	mb_state.imu_thetadot = (mb_state.imu_theta-prev_imu_theta)*SAMPLE_RATE_HZ;
+	prev_imu_theta = mb_state.imu_theta;
+	if(mb_state.imu_thetadot>6*SAMPLE_RATE_HZ || mb_state.imu_thetadot<-6*SAMPLE_RATE_HZ)
+		mb_state.imu_thetadot = 0;
 	fprintf(f, "%lf,", mb_state.alpha);
 	fprintf(f, "%lf,", mb_state.imu_theta);
 	fprintf(f, "%lf,", mb_state.odometry_theta);
