@@ -5,7 +5,7 @@
 *
 *******************************************************************************/
 #include "mb_motors.h"
-
+#include "../libraries/roboticscape.h"
 // global initialized flag
 int mb_motors_initialized = 0;
 
@@ -21,14 +21,11 @@ int mb_initialize_motors(){
     #ifdef DEBUG
     printf("Initializing: PWM\n");
     #endif
-
     if(rc_pwm_init(1,DEFAULT_PWM_FREQ)){
         printf("ERROR: failed to initialize hrpwm1\n");
         return -1;
     }
-
     mb_motors_initialized = 1;
-    
     #ifdef DEBUG
     printf("motors initialized...\n");
     #endif
@@ -51,6 +48,8 @@ int mb_enable_brake(){
         return -1;
     }
     //TODO: enable braking
+	
+    rc_gpio_set_value_mmap(MOT_BRAKE_EN,HIGH);
     return 0;
 }
 
@@ -66,6 +65,7 @@ int mb_disable_brake(){
         return -1;
     }
     //TODO: disable braking
+    rc_gpio_set_value_mmap(MOT_BRAKE_EN,LOW);
     return 0;
 }
 
@@ -100,6 +100,32 @@ int mb_set_motor(int motor, float duty){
         return -1;
     }
     //TODO: make your motors run
+    if(motor == 1)
+	    if(duty<0)
+	    	{
+		rc_pwm_set_duty_mmap(1,'A',0.5);
+		rc_gpio_set_value_mmap(MDIR1,HIGH);
+		printf("1A -ve\n");
+		}
+	    else
+		{
+	    	rc_pwm_set_duty_mmap(1,'A',0.5);
+		rc_gpio_set_value_mmap(MDIR1,LOW);
+		printf("1A +ve\n");
+		}
+    else
+	    if(duty<0)
+	    	{
+		rc_pwm_set_duty_mmap(1,'B',0.5);
+		rc_gpio_set_value_mmap(MDIR2,HIGH);
+		printf("1B -ve\n");
+		}
+	    else
+		{
+	    	rc_pwm_set_duty_mmap(1,'B',0.5);
+		rc_gpio_set_value_mmap(MDIR2,LOW);
+		printf("1B +ve\n");	
+		}
     return 0;
 }
 
@@ -114,8 +140,8 @@ int mb_set_motor_all(float duty){
         return -1;
     }
 
-    mb_set_motor(1, duty);
-    mb_set_motor(2, duty);
+    mb_set_motor(RIGHT_MOTOR, duty);
+    mb_set_motor(LEFT_MOTOR, duty);
     
     return 0;
 }
