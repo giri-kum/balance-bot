@@ -5,7 +5,7 @@
 *
 *******************************************************************************/
 #include "mb_motors.h"
-#include "../libraries/roboticscape.h"
+//#include "../libraries/roboticscape.h" I don't think we even need to include this
 // global initialized flag
 int mb_motors_initialized = 0;
 
@@ -48,7 +48,7 @@ int mb_enable_brake(){
         return -1;
     }
     //TODO: enable braking
-	
+    
     rc_gpio_set_value_mmap(MOT_BRAKE_EN,HIGH);
     return 0;
 }
@@ -82,6 +82,8 @@ int mb_disable_motors(){
         return -1;
     }
     //TODO: disable motors
+    rc_pwm_close(1);
+    // Unexports subsys 1 to pull it into low-power state
     return 0;
 }
 
@@ -95,38 +97,58 @@ int mb_disable_motors(){
 *******************************************************************************/
 int mb_set_motor(int motor, float duty){
     
-    if(mb_motors_initialized==0){
+    if(mb_motors_initialized==0)
+    {
         printf("ERROR: trying to rc_set_motor_all before they have been initialized\n");
         return -1;
     }
+
+    if ((duty<-1.0 || duty >1.0))
+    {
+        printf("ERROR: duty cycle out of range\n");
+        return -1;
+    }
+
     //TODO: make your motors run
     if(motor == 1)
-	    if(duty<0)
-	    	{
-		rc_pwm_set_duty_mmap(1,'A',0.5);
-		rc_gpio_set_value_mmap(MDIR1,HIGH);
-		printf("1A -ve\n");
-		}
-	    else
-		{
-	    	rc_pwm_set_duty_mmap(1,'A',0.5);
-		rc_gpio_set_value_mmap(MDIR1,LOW);
-		printf("1A +ve\n");
-		}
+    {
+        if(duty<0)
+        {
+            rc_pwm_set_duty_mmap(1,'A',-duty);
+            rc_gpio_set_value_mmap(MDIR1,HIGH);
+            //printf("1A -ve\n");
+        }
+        else
+        {
+            rc_pwm_set_duty_mmap(1,'A',duty);
+            rc_gpio_set_value_mmap(MDIR1,LOW);
+            //printf("1A +ve\n");
+        }
+        return 0;
+    }
+        
+    else if (motor == 2)
+    {
+        if(duty<0)
+        {
+            rc_pwm_set_duty_mmap(1,'B',-duty);
+            rc_gpio_set_value_mmap(MDIR2,HIGH);
+            //printf("1B -ve\n");
+        }
+        else
+        {
+            rc_pwm_set_duty_mmap(1,'B',duty);
+            rc_gpio_set_value_mmap(MDIR2,LOW);
+            //printf("1B +ve\n"); 
+        }
+        return 0;
+    }
     else
-	    if(duty<0)
-	    	{
-		rc_pwm_set_duty_mmap(1,'B',0.5);
-		rc_gpio_set_value_mmap(MDIR2,HIGH);
-		printf("1B -ve\n");
-		}
-	    else
-		{
-	    	rc_pwm_set_duty_mmap(1,'B',0.5);
-		rc_gpio_set_value_mmap(MDIR2,LOW);
-		printf("1B +ve\n");	
-		}
-    return 0;
+    {
+        printf("ERROR: Wrong motor id\n");
+        return -1;
+    }
+       
 }
 
 /*******************************************************************************

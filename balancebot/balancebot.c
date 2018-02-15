@@ -219,7 +219,7 @@ void* printf_loop(void* ptr){
 		
 		if(new_state == RUNNING){
 			printf("\r");
-			//Add Print stattements here, do not follow with /n
+			//Add Print statements here, do not follow with /n
 			printf("%7.3f |", mb_state.alpha);
 			printf("%7.3f  |", mb_state.theta);
 			printf("%7d  |", mb_state.left_encoder);
