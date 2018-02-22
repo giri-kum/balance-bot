@@ -2119,7 +2119,7 @@ float rc_std_dev_ringbuf(rc_ringbuf_t buf);
 *
 * @ rc_filter_t rc_empty_filter()
 *
-* This is a very important function. If your d_filter_t struct is not a global
+* This is a very important function. If your rc_filter_t struct is not a global
 * variable, then its initial contents cannot be guaranteed to be anything in
 * particular. Therefore it could contain problematic contents which could
 * interfere with functions in this library. Therefore, you should always

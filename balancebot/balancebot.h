@@ -21,6 +21,8 @@ mb_state_t mb_state;
 mb_setpoints_t mb_setpoints;
 mb_odometry_t mb_odometry;
 
+uint64_t current_time, start_time;
+
 // functions
 void balancebot_controller();
 

@@ -14,7 +14,9 @@ int mb_initialize_controller(){
     mb_load_controller_config();
     
     //TODO: initialize your controller here
-
+    //Sprite:
+    right_pid = PID_Init(right_pid_params.kp, right_pid_params.ki, right_pid_params.kd, right_pid_params.dFilterHz, SAMPLE_RATE_HZ); //defined in mb_defs.h
+    left_pid = PID_Init(left_pid_params.kp, left_pid_params.ki, left_pid_params.kd, left_pid_params.dFilterHz, SAMPLE_RATE_HZ);
     return 0;
 }
 
@@ -45,6 +47,11 @@ int mb_load_controller_config(){
         &left_pid_params.dFilterHz
         );
 
+    // Sprite: for debugging purposes
+    //printf("%f, %f, %f, %f", left_pid_params.kp, left_pid_params.ki, left_pid_params.kd, left_pid_params.dFilterHz);
+
+
+
     fscanf(file, "%f %f %f %f",
         &right_pid_params.kp,
         &right_pid_params.ki,
@@ -70,6 +77,18 @@ int mb_load_controller_config(){
 int mb_controller_update(mb_state_t* mb_state){
     //TODO: update your controller each timestep, called by 
     // the IMU interrupt function
+    // Sprite:
+    float error;
+    if (mb_state->alpha < 0){
+        error = -3.14 - (mb_state->alpha);
+    }
+    else{
+        error = 3.14 - (mb_state->alpha); // in radian
+    }
+    
+    mb_state->right_cmd = ((float) ENC_1_POL)*(PID_Compute(right_pid, error));
+    mb_state->left_cmd = ((float) ENC_2_POL)*(PID_Compute(left_pid, error));
+
     return 0;
 }
 

@@ -14,5 +14,8 @@ int mb_destroy_controller();
 pid_parameters_t left_pid_params;
 pid_parameters_t right_pid_params;
 
+PID_t *right_pid;
+PID_t *left_pid;
+
 #endif
 

@@ -39,7 +39,7 @@ int main(){
 	// set up IMU configuration
 	printf("initializing imu... \n");
 	rc_imu_config_t imu_config = rc_default_imu_config();
-	imu_config.dmp_sample_rate = SAMPLE_RATE_HZ;
+	imu_config.dmp_sample_rate = SAMPLE_RATE_HZ; // Sprite: defined in mb_defs.h
 	imu_config.orientation = ORIENTATION_Z_UP;
 
 	if(rc_initialize_imu_dmp(&imu_data, imu_config)){
@@ -47,7 +47,7 @@ int main(){
 		return -1;
 	}
 
-	//rc_nanosleep(5E9); // wait for imu to stabilize
+	rc_nanosleep(10E9); // wait for imu to stabilize
 
 	//initialize state mutex
     pthread_mutex_init(&state_mutex, NULL);
@@ -107,8 +107,6 @@ int main(){
 *******************************************************************************/
 void balancebot_controller(){
 
-
-
 	//lock state mutex
 	pthread_mutex_lock(&state_mutex);
 	// Read IMU
@@ -131,16 +129,20 @@ void balancebot_controller(){
     // reset encoders to 0
     rc_set_encoder_pos(1, 0);
     rc_set_encoder_pos(2, 0);
-    
-    if(!mb_setpoints.manual_ctl){
-    	mb_set_motor(RIGHT_MOTOR, mb_state.right_cmd);
-   		mb_set_motor(LEFT_MOTOR, mb_state.left_cmd);
-   	}
 
-    if(mb_setpoints.manual_ctl){
-    	mb_set_motor(RIGHT_MOTOR, mb_setpoints.fwd_velocity + mb_setpoints.turn_velocity);
-   		mb_set_motor(LEFT_MOTOR, mb_setpoints.fwd_velocity - mb_setpoints.turn_velocity);
-   	}
+    mb_set_motor(RIGHT_MOTOR, mb_state.right_cmd);
+    mb_set_motor(LEFT_MOTOR, mb_state.left_cmd);
+    
+    // Sprite: commented out for debugging purposese, uncomment later
+    // if(!mb_setpoints.manual_ctl){
+    // 	mb_set_motor(RIGHT_MOTOR, mb_state.right_cmd);
+   	// 	mb_set_motor(LEFT_MOTOR, mb_state.left_cmd);
+   	// }
+
+    // if(mb_setpoints.manual_ctl){
+    // 	mb_set_motor(RIGHT_MOTOR, mb_setpoints.fwd_velocity + mb_setpoints.turn_velocity);
+   	// 	mb_set_motor(LEFT_MOTOR, mb_setpoints.fwd_velocity - mb_setpoints.turn_velocity);
+   	// }
     
 
     // TODO: Set motor velocities
@@ -209,6 +211,8 @@ void* printf_loop(void* ptr){
 			printf("    X    |");
 			printf("    Y    |");
 			printf("    θ    |");
+			printf("Right_PID|");
+			printf("Left_PID|");
 
 			printf("\n");
 		}
@@ -224,6 +228,8 @@ void* printf_loop(void* ptr){
 			printf("%7.3f  |", mb_state.theta);
 			printf("%7d  |", mb_state.left_encoder);
 			printf("%7d  |", mb_state.right_encoder);
+			printf("%7.3f |", mb_state.right_cmd);
+			printf("%7.3f  |", mb_state.left_cmd);
 			fflush(stdout);
 		}
 		usleep(1000000 / PRINTF_HZ);
