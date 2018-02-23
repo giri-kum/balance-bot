@@ -48,7 +48,7 @@ int mb_load_controller_config(){
         );
 
     // Sprite: for debugging purposes
-    //printf("%f, %f, %f, %f", left_pid_params.kp, left_pid_params.ki, left_pid_params.kd, left_pid_params.dFilterHz);
+    printf("%f, %f, %f, %f", left_pid_params.kp, left_pid_params.ki, left_pid_params.kd, left_pid_params.dFilterHz);
 
 
 
@@ -80,14 +80,18 @@ int mb_controller_update(mb_state_t* mb_state){
     // Sprite:
     float error;
     if (mb_state->alpha < 0){
-        error = -3.14 - (mb_state->alpha);
+        error = -3.155 - (mb_state->alpha);
     }
     else{
-        error = 3.14 - (mb_state->alpha); // in radian
+        error = 3.125 - (mb_state->alpha); // in radian
     }
     
     mb_state->right_cmd = ((float) ENC_1_POL)*(PID_Compute(right_pid, error));
     mb_state->left_cmd = ((float) ENC_2_POL)*(PID_Compute(left_pid, error));
+    
+    // Sprite: for debugging purposes
+    mb_state->right_pid_d = right_pid->dTerm;
+    mb_state->left_pid_d = left_pid->dTerm;
 
     return 0;
 }

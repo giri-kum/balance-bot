@@ -230,6 +230,8 @@ void* printf_loop(void* ptr){
 			printf("%7d  |", mb_state.right_encoder);
 			printf("%7.3f |", mb_state.right_cmd);
 			printf("%7.3f  |", mb_state.left_cmd);
+			printf("%7.3f |", mb_state.right_pid_d);
+			printf("%7.3f  |", mb_state.left_pid_d);
 			fflush(stdout);
 		}
 		usleep(1000000 / PRINTF_HZ);

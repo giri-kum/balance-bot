@@ -75,7 +75,7 @@ float PID_Compute(PID_t* pid, float error) {
   // Sprite: compute dTerm
   pid->dTerm = (pid->kd)*(((pid->pidInput) - (pid->prevInput))/dt);
   // Sprite: go through the low-pass filter
-  pid->dTerm = rc_march_filter(&(pid->dFilter), pid->dTerm); //Sprite: float rc_march_filter(rc_filter_t* f, float new_input)
+  // pid->dTerm = rc_march_filter(&(pid->dFilter), pid->dTerm); //Sprite: float rc_march_filter(rc_filter_t* f, float new_input)
 
   // Sprite: compute PID output
   pid->pidOutput = (pid->pTerm) + (pid->iTerm) + (pid->dTerm);
