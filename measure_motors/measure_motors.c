@@ -5,7 +5,6 @@
 *******************************************************************************/
 #include "../balancebot/balancebot.h"
                    // Sprite: PI is already included in rc_usefulincludes.h
-#define CPR 979.2 // Sprite: counts per revolution = 20.4*48
 #define TS 10000 // Sprite: define sampling period to be 10,000 microseconds could also use DT in mb_defs.h, however an additional macro definition provides more flexibility in motor measurement
 #define DUTY_CYCLE 0.5    // Sprite: define duty cycle, may want to test at different duty_cycle
 
@@ -150,16 +149,16 @@ int main(){
 		// handle other states
 		if(rc_get_state()==RUNNING){
 			//run right and left forward for 2s
-			mb_set_motor(RIGHT_MOTOR, DUTY_CYCLE);
-			mb_set_motor(LEFT_MOTOR, DUTY_CYCLE);
+			mb_set_motor(RIGHT_MOTOR, SPEED_RATIO*DUTY_CYCLE);
+			mb_set_motor(LEFT_MOTOR, -DUTY_CYCLE);
 			rc_nanosleep(2E9);
 			//Pause for 2s
 			mb_set_motor(RIGHT_MOTOR, 0.0);
 			mb_set_motor(LEFT_MOTOR, 0.0);
 			rc_nanosleep(2E9);
 			//run right and left backwards for 2s
-			mb_set_motor(RIGHT_MOTOR, -DUTY_CYCLE);
-			mb_set_motor(LEFT_MOTOR, -DUTY_CYCLE);
+			mb_set_motor(RIGHT_MOTOR, -SPEED_RATIO*DUTY_CYCLE);
+			mb_set_motor(LEFT_MOTOR, DUTY_CYCLE);
 			rc_nanosleep(2E9);
 
 			//stop motors for 3s

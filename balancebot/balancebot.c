@@ -5,7 +5,7 @@
 * 
 *******************************************************************************/
 #include "balancebot.h"
-
+float desired_alpha;
 /*******************************************************************************
 * int main() 
 *
@@ -65,7 +65,8 @@ int main(){
 
 	printf("initializing odometry...\n");
 	mb_initialize_odometry(&mb_odometry, 0.0,0.0,0.0);
-
+	desired_alpha = imu_data.dmp_TaitBryan[TB_PITCH_X];
+	printf("Desired alpha = %lf\n", desired_alpha );
 	printf("attaching imu interupt...\n");
 	rc_set_imu_interrupt_func(&balancebot_controller);
 
@@ -121,7 +122,7 @@ void balancebot_controller(){
     mb_update_odometry(&mb_odometry, &mb_state);
 
     // Calculate controller outputs
-    mb_controller_update(&mb_state);
+    mb_controller_update(&mb_state,desired_alpha);
 
     //unlock state mutex
     pthread_mutex_unlock(&state_mutex);
@@ -197,6 +198,9 @@ void* setpoint_control_loop(void* ptr){
 *******************************************************************************/
 void* printf_loop(void* ptr){
 	rc_state_t last_state, new_state; // keep track of last state
+	FILE * f1;
+	f1 = fopen("pid.dat", "w");
+
 	while(rc_get_state()!=EXITING){
 		new_state = rc_get_state();
 		// check if this is the first time since being paused
@@ -208,13 +212,36 @@ void* printf_loop(void* ptr){
 			printf("    θ    |");
 			printf("  L Enc  |");
 			printf("  R Enc  |");
+			printf("  L_u    |");
+			printf("  R_u    |");
 			printf("    X    |");
 			printf("    Y    |");
 			printf("    θ    |");
-			printf("Right_PID|");
-			printf("Left_PID|");
-
+			printf("  error    |");
+			printf("  L_P    |");
+			printf("  R_P    |");
+			printf("  L_I    |");
+			printf("  R_I    |");
+			printf("  L_D    |");
+			printf("  R_D    |");
 			printf("\n");
+			fputs("α,", f1);
+			fputs("θ,", f1);
+			fputs("L Enc,", f1);
+			fputs("R Enc,", f1);
+			fputs("L_u,", f1);
+			fputs("R_u,", f1);
+			fputs("X,", f1);
+		    fputs("Y,", f1);
+			fputs("θ,", f1);
+			fputs("error,", f1);
+			fputs("L_P,", f1);
+			fputs("R_P,", f1);
+			fputs("L_I,", f1);
+			fputs("R_I,", f1);
+		    fputs("L_D,", f1);
+			fputs("R_D", f1);
+		    fputs("\n", f1);
 		}
 		else if(new_state==PAUSED && last_state!=PAUSED){
 			printf("\nPAUSED\n");
@@ -222,19 +249,46 @@ void* printf_loop(void* ptr){
 		last_state = new_state;
 		
 		if(new_state == RUNNING){
+			
 			printf("\r");
 			//Add Print statements here, do not follow with /n
-			printf("%7.3f |", mb_state.alpha);
+			printf("%7.3f  |", mb_state.alpha);
 			printf("%7.3f  |", mb_state.theta);
 			printf("%7d  |", mb_state.left_encoder);
 			printf("%7d  |", mb_state.right_encoder);
-			printf("%7.3f |", mb_state.right_cmd);
 			printf("%7.3f  |", mb_state.left_cmd);
-			printf("%7.3f |", mb_state.right_pid_d);
+			printf("%7.3f  |", mb_state.right_cmd);
+			printf("%7.3f  |", mb_odometry.x);
+			printf("%7.3f  |", mb_odometry.y);
+			printf("%7.3f  |", mb_odometry.theta);
+			printf("%7.3f  |", mb_state.error);
+			printf("%7.3f  |", mb_state.left_pid_p);
+			printf("%7.3f  |", mb_state.right_pid_p);
+			printf("%7.3f  |", mb_state.left_pid_i);
+			printf("%7.3f  |", mb_state.right_pid_i);
 			printf("%7.3f  |", mb_state.left_pid_d);
+			printf("%7.3f  |", mb_state.right_pid_d);
 			fflush(stdout);
+			fprintf(f1, "%lf,", mb_state.alpha);
+			fprintf(f1, "%lf,", mb_state.theta);
+			fprintf(f1, "%d,", mb_state.left_encoder);
+			fprintf(f1, "%d,", mb_state.right_encoder);
+			fprintf(f1, "%lf,", mb_state.left_cmd);
+			fprintf(f1, "%lf,", mb_state.right_cmd);
+			fprintf(f1, "%lf,", mb_odometry.x);
+			fprintf(f1, "%lf,", mb_odometry.y);
+			fprintf(f1, "%lf,", mb_odometry.theta);
+			fprintf(f1, "%lf,", mb_state.error);
+			fprintf(f1, "%lf,", mb_state.left_pid_p);
+			fprintf(f1, "%lf,", mb_state.right_pid_p);
+			fprintf(f1, "%lf,", mb_state.left_pid_i);
+			fprintf(f1, "%lf,", mb_state.right_pid_i);
+			fprintf(f1, "%lf,", mb_state.left_pid_d);
+			fprintf(f1, "%lf\n", mb_state.right_pid_d);
+
 		}
 		usleep(1000000 / PRINTF_HZ);
 	}
+	fclose(f1);
 	return NULL;
 } 

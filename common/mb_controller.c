@@ -74,25 +74,41 @@ int mb_load_controller_config(){
 *
 *******************************************************************************/
 
-int mb_controller_update(mb_state_t* mb_state){
+int mb_controller_update(mb_state_t* mb_state, float desired_alpha){
     //TODO: update your controller each timestep, called by 
     // the IMU interrupt function
     // Sprite:
     float error;
-    if (mb_state->alpha < 0){
-        error = -3.155 - (mb_state->alpha);
+    if (desired_alpha < 0){
+        if (mb_state->alpha < 0){
+            error = desired_alpha - (mb_state->alpha);
+        }
+        else{
+            error = TWO_PI+desired_alpha - (mb_state->alpha); // in radian
+        }
     }
     else{
-        error = 3.125 - (mb_state->alpha); // in radian
+        if (mb_state->alpha < 0){
+            error = desired_alpha - TWO_PI - (mb_state->alpha);
+        }
+        else{
+            error = desired_alpha - (mb_state->alpha); // in radian
+        }
     }
+
+   
     
-    mb_state->right_cmd = ((float) ENC_1_POL)*(PID_Compute(right_pid, error));
+    mb_state->right_cmd = ((float) ENC_1_POL)*SPEED_RATIO*(PID_Compute(right_pid, error));
     mb_state->left_cmd = ((float) ENC_2_POL)*(PID_Compute(left_pid, error));
     
     // Sprite: for debugging purposes
+    mb_state->right_pid_p = right_pid->pTerm;
+    mb_state->left_pid_p = left_pid->pTerm;
+    mb_state->right_pid_i = right_pid->iTerm;
+    mb_state->left_pid_i = left_pid->iTerm;
     mb_state->right_pid_d = right_pid->dTerm;
     mb_state->left_pid_d = left_pid->dTerm;
-
+    mb_state->error = error;
     return 0;
 }
 

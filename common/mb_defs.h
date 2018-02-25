@@ -27,6 +27,7 @@
 #define MOT_2_CS                1    // analog in of motor 2 current sense
 #define GEAR_RATIO              20.4  // gear ratio of motor
 #define ENCODER_RES             48  // encoder counts per motor shaft revolution
+#define CPR                     979.2 // Sprite: counts per revolution = 20.4*48
 #define WHEEL_DIAMETER          0.08 // diameter of wheel in meters
 #define WHEEL_BASE              0.2  // wheel separation distance in meters
 #define FWD_VEL_SENSITIVITY     0.25   // sensitivity of RC control for moving
@@ -35,5 +36,5 @@
 #define DT                      0.01  // 1/sample_rate
 #define PRINTF_HZ               10    // rate of print loop
 #define RC_CTL_HZ               1    // rate of RC data update
-
+#define SPEED_RATIO 			22.45/25.02 // Motor2/Motor1 - where Motor 2 is left motor and Motor 1 is right motor
 #endif

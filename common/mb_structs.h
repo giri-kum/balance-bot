@@ -14,9 +14,14 @@ struct mb_state{
     float   right_cmd; //right wheel command [-1..1]
 
     //TODO: Add more variables to this state as needed
-    // Sprite: added d-term for debugging purposes
+    // Sprite: added for debugging purposes
+    float   left_pid_p;
+    float   right_pid_p;
+    float   left_pid_i;
+    float   right_pid_i;
     float   left_pid_d;
     float   right_pid_d;
+    float   error;
 };
 
 typedef struct mb_setpoints mb_setpoints_t;
@@ -33,6 +38,9 @@ struct mb_odometry{
     float x;        //x position from initialization in m
     float y;        //y position from initialization in m
     float theta;    //orientation from initialization in rad
+    float del_x;
+    float del_y;
+    float del_theta;
 };
 
 #endif
