@@ -22,6 +22,7 @@ struct mb_state{
     float   left_pid_d;
     float   right_pid_d;
     float   error;
+    float   xdot;
 };
 
 typedef struct mb_setpoints mb_setpoints_t;

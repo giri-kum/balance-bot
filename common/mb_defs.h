@@ -36,5 +36,5 @@
 #define DT                      0.01  // 1/sample_rate
 #define PRINTF_HZ               10    // rate of print loop
 #define RC_CTL_HZ               1    // rate of RC data update
-#define SPEED_RATIO 			22.45/25.02 // Motor2/Motor1 - where Motor 2 is left motor and Motor 1 is right motor
+#define SPEED_RATIO 		1    //	22.45/25.02 // Motor2/Motor1 - where Motor 2 is left motor and Motor 1 is right motor
 #endif

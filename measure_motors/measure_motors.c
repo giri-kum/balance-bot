@@ -116,6 +116,7 @@ void* data_loop(void* ptr){
 *
 *******************************************************************************/
 int main(){
+	float delay = 4E9;
 	// always initialize cape library first
 	if(rc_initialize()){
 		fprintf(stderr,"ERROR: failed to initialize rc_initialize(), are you root?\n");
@@ -149,17 +150,17 @@ int main(){
 		// handle other states
 		if(rc_get_state()==RUNNING){
 			//run right and left forward for 2s
-			mb_set_motor(RIGHT_MOTOR, SPEED_RATIO*DUTY_CYCLE);
-			mb_set_motor(LEFT_MOTOR, -DUTY_CYCLE);
-			rc_nanosleep(2E9);
+			mb_set_motor(RIGHT_MOTOR, 0);
+			mb_set_motor(LEFT_MOTOR, DUTY_CYCLE);
+			rc_nanosleep(delay);
 			//Pause for 2s
 			mb_set_motor(RIGHT_MOTOR, 0.0);
 			mb_set_motor(LEFT_MOTOR, 0.0);
 			rc_nanosleep(2E9);
 			//run right and left backwards for 2s
-			mb_set_motor(RIGHT_MOTOR, -SPEED_RATIO*DUTY_CYCLE);
-			mb_set_motor(LEFT_MOTOR, DUTY_CYCLE);
-			rc_nanosleep(2E9);
+			mb_set_motor(RIGHT_MOTOR, 0);
+			mb_set_motor(LEFT_MOTOR, -DUTY_CYCLE);
+			rc_nanosleep(delay);
 
 			//stop motors for 3s
 			mb_set_motor(LEFT_MOTOR, 0.0);
