@@ -99,6 +99,9 @@ int mb_controller_update(mb_state_t* mb_state){
         desired_alpha = desired_alpha - TWO_PI;
     }
 
+    // Sprite: hard coded the upright position, will delete later
+    desired_alpha = 3.12;
+
     if (desired_alpha < 0){
         if (mb_state->alpha < 0){
             error = desired_alpha - (mb_state->alpha);
