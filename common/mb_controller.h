@@ -10,6 +10,7 @@ int mb_initialize_controller();
 int mb_load_controller_config();
 int mb_controller_update(mb_state_t* mb_state);
 int mb_destroy_controller();
+float compensate(float command, float compensator);
 
 pid_parameters_t left_pid_params;
 pid_parameters_t right_pid_params;

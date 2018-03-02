@@ -19,7 +19,8 @@ int main(){
 
 	//set cpu freq to max performance
 	rc_set_cpu_freq(FREQ_1000MHZ);
-
+	//Giri: IMU Calibration data, delete later.
+	f = fopen("imu.dat", "w"); 
 	// start printf_thread if running from a terminal
 	// if it was started as a background process then don't bother
 	if(isatty(fileno(stdout))){
@@ -47,7 +48,7 @@ int main(){
 		return -1;
 	}
 
-	rc_nanosleep(10E9); // wait for imu to stabilize
+	rc_nanosleep(15E9); // wait for imu to stabilize
 
 	//initialize state mutex
     pthread_mutex_init(&state_mutex, NULL);
@@ -89,7 +90,7 @@ int main(){
 	// exit cleanly
 	mb_disable_motors();
 	rc_cleanup();
-	 
+	fclose(f); 
 	return 0;
 }
 
@@ -106,13 +107,15 @@ int main(){
 *
 *******************************************************************************/
 void balancebot_controller(){
+	
+	
 
 	//lock state mutex
 	pthread_mutex_lock(&state_mutex);
 	// Read IMU
 	mb_state.alpha = imu_data.dmp_TaitBryan[TB_PITCH_X];
 	mb_state.theta = imu_data.dmp_TaitBryan[TB_YAW_Z];
-
+	fprintf(f, "%lf\n", mb_state.alpha);
 	// Read encoders
 	mb_state.left_encoder = ENC_1_POL * rc_get_encoder_pos(1);
     mb_state.right_encoder = ENC_2_POL * rc_get_encoder_pos(2);
@@ -146,6 +149,7 @@ void balancebot_controller(){
     
 
     // TODO: Set motor velocities
+	
 
 }
 

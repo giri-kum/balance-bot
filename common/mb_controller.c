@@ -100,7 +100,7 @@ int mb_controller_update(mb_state_t* mb_state){
     }
 
     // Sprite: hard coded the upright position, will delete later
-    desired_alpha = 3.12;
+    //desired_alpha = 3.12;
 
     if (desired_alpha < 0){
         if (mb_state->alpha < 0){
@@ -121,9 +121,18 @@ int mb_controller_update(mb_state_t* mb_state){
 
    
     
-    mb_state->right_cmd = ((float) ENC_1_POL)*SPEED_RATIO*(PID_Compute(right_pid, error));
-    mb_state->left_cmd = ((float) ENC_2_POL)*(PID_Compute(left_pid, error));
+    mb_state->right_cmd = ((float) ENC_1_POL)*SPEED_RATIO*(compensate(PID_Compute(right_pid, error),0.1));
+    mb_state->left_cmd = ((float) ENC_2_POL)*(compensate(PID_Compute(left_pid, error),0.1));
     
+    // if(mb_state->right_cmd > 0)
+    // {
+    //     mb_state->right_cmd = mb_state->right_cmd - 0.1;
+    //     if(mb_state->right_cmd < 0)
+    //         mb_state->right_cmd = 0.0;
+    // }
+    
+    // mb_state->left_cmd = -1.0*mb_state->right_cmd;
+
     // Sprite: for debugging purposes
     mb_state->right_pid_p = right_pid->pTerm;
     mb_state->left_pid_p = left_pid->pTerm;
@@ -136,6 +145,24 @@ int mb_controller_update(mb_state_t* mb_state){
     return 0;
 }
 
+
+float compensate(float command, float compensator)
+{
+    float result;
+if(command < 0)
+    {
+        result = command - compensator;
+        if(result < -1)
+            result = -1.0;
+    }
+else
+    {
+        result = command + compensator;
+        if(result > 1)
+            result = 1.0;
+    }
+    return result;
+}
 
 /*******************************************************************************
 * int mb_destroy_controller()
