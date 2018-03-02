@@ -11,6 +11,8 @@
 *
 *******************************************************************************/
 int main(){
+	queue_length = 3;
+	intialize_queue(0);
 	// always initialize cape library first
 	if(rc_initialize()){
 		fprintf(stderr,"ERROR: failed to initialize rc_initialize(), are you root?\n");
@@ -48,8 +50,8 @@ int main(){
 		return -1;
 	}
 
-	rc_nanosleep(15E9); // wait for imu to stabilize
-
+	rc_nanosleep(10E9); // wait for imu to stabilize
+	intialize_queue(wrap_angle(imu_data.dmp_TaitBryan[TB_PITCH_X]));
 	//initialize state mutex
     pthread_mutex_init(&state_mutex, NULL);
 
@@ -114,6 +116,10 @@ void balancebot_controller(){
 	pthread_mutex_lock(&state_mutex);
 	// Read IMU
 	mb_state.alpha = imu_data.dmp_TaitBryan[TB_PITCH_X];
+	// wrap angle
+	mb_state.alpha = wrap_angle(mb_state.alpha);
+	push_queue(mb_state.alpha);
+	//mb_state.alpha = average_queue();
 	mb_state.theta = imu_data.dmp_TaitBryan[TB_YAW_Z];
 	fprintf(f, "%lf\n", mb_state.alpha);
 	// Read encoders
@@ -302,3 +308,34 @@ void* printf_loop(void* ptr){
 	fclose(f1);
 	return NULL;
 } 
+
+void push_queue(float value)
+{
+	for(int i = 0; i<queue_length-1;i++)
+		{
+			filter_queue[i]= filter_queue[i+1];
+		}
+	filter_queue[queue_length-1] = value;
+}
+void intialize_queue(float value)
+{
+	filter_queue[0] = value;
+	for(int i = 0; i<queue_length-1;i++)
+		{
+			filter_queue[i+1]= filter_queue[i];
+		}
+}
+
+float average_queue()
+{
+	float sum = 0;
+	for (int i = 0; i < queue_length; ++i)
+	{
+		sum += filter_queue[i];
+	}
+	return sum/queue_length;
+}
+float wrap_angle(float value)
+{
+	return value>0? (value):(value + TWO_PI);
+}
