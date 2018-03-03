@@ -130,7 +130,7 @@ void balancebot_controller(){
     mb_update_odometry(&mb_odometry, &mb_state);
 
     // Calculate controller outputs
-    mb_controller_update(&mb_state);
+    mb_controller_update(&mb_state,&mb_setpoints);
 
     //unlock state mutex
     pthread_mutex_unlock(&state_mutex);
@@ -143,17 +143,17 @@ void balancebot_controller(){
     mb_set_motor(LEFT_MOTOR, mb_state.left_cmd);
     
     // Sprite: commented out for debugging purposese, uncomment later
-    // if(!mb_setpoints.manual_ctl){
-    // 	mb_set_motor(RIGHT_MOTOR, mb_state.right_cmd);
-   	// 	mb_set_motor(LEFT_MOTOR, mb_state.left_cmd);
-   	// }
+   /*  if(!mb_setpoints.manual_ctl){
+     	mb_set_motor(RIGHT_MOTOR, mb_state.right_cmd);
+   	 	mb_set_motor(LEFT_MOTOR, mb_state.left_cmd);
+   	 }
 
-    // if(mb_setpoints.manual_ctl){
-    // 	mb_set_motor(RIGHT_MOTOR, mb_setpoints.fwd_velocity + mb_setpoints.turn_velocity);
-   	// 	mb_set_motor(LEFT_MOTOR, mb_setpoints.fwd_velocity - mb_setpoints.turn_velocity);
-   	// }
+     if(mb_setpoints.manual_ctl){
+     	mb_set_motor(RIGHT_MOTOR, mb_setpoints.fwd_velocity + mb_setpoints.turn_velocity);
+   	 	mb_set_motor(LEFT_MOTOR, mb_setpoints.fwd_velocity - mb_setpoints.turn_velocity);
+   	 }
     
-
+*/
     // TODO: Set motor velocities
 	
 
@@ -173,23 +173,28 @@ void* setpoint_control_loop(void* ptr){
 	rc_initialize_dsm();
 
 	while(1){
-		if (rc_is_new_dsm_data()) {
-	 		
+		if (rc_is_new_dsm_data()) 
+		{		
 			// TODO: Handle the DSM data from the Spektrum radio reciever
 			// You may also implement switching between manual and autonomous mode
 			// using channel 5 of the DSM data.
-
-		mb_setpoints.fwd_velocity = FWD_VEL_SENSITIVITY * rc_get_dsm_ch_normalized(3);
-		mb_setpoints.turn_velocity = TURN_VEL_SENSITIVITY * rc_get_dsm_ch_normalized(4);
-		
-		if(rc_get_dsm_ch_normalized(5) > 0.0){
-			mb_setpoints.manual_ctl = 1;
-		}
-		else{
-			mb_setpoints.manual_ctl = 0;
-		}
-
+			if(rc_get_dsm_ch_normalized(5) > 0.0)
+				{
+					mb_setpoints.manual_ctl = 1;
+					mb_setpoints.fwd_velocity = FWD_VEL_SENSITIVITY * rc_get_dsm_ch_normalized(3);
+					mb_setpoints.turn_velocity = TURN_VEL_SENSITIVITY * rc_get_dsm_ch_normalized(4);
+				}
+			else{ //Autonomous mode: set points are controlled by the code, it is zero for the time being.
+				mb_setpoints.manual_ctl = 0;
+				mb_setpoints.fwd_velocity = 0;
+				mb_setpoints.turn_velocity = 0;
+				}
 	 	}
+	 	else
+		{
+			mb_setpoints.fwd_velocity = 0;
+			mb_setpoints.turn_velocity = 0;	
+		}
 	 	usleep(1000000 / RC_CTL_HZ);
 	}
 }
@@ -226,7 +231,10 @@ void* printf_loop(void* ptr){
 			printf("    X    |");
 			printf("    Y    |");
 			printf("    θ    |");
-			printf("  error    |");
+			/*printf("  CH3    |");
+			printf("  CH4    |");
+			printf("  CH5    |");*/
+			printf("  error  |");
 			printf("  L_P    |");
 			printf("  R_P    |");
 			printf("  L_I    |");
@@ -274,6 +282,9 @@ void* printf_loop(void* ptr){
 			printf("%7.3f  |", mb_odometry.x);
 			printf("%7.3f  |", mb_odometry.y);
 			printf("%7.3f  |", mb_odometry.theta);
+			/*printf("%7.3f  |", rc_get_dsm_ch_normalized(3));
+			printf("%7.3f  |", rc_get_dsm_ch_normalized(4));
+			printf("%7.3f  |", rc_get_dsm_ch_normalized(5));*/
 			printf("%7.3f  |", mb_state.error);
 			printf("%7.3f  |", mb_state.left_pid_p);
 			printf("%7.3f  |", mb_state.right_pid_p);

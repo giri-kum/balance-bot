@@ -8,7 +8,7 @@
 
 int mb_initialize_controller();
 int mb_load_controller_config();
-int mb_controller_update(mb_state_t* mb_state);
+int mb_controller_update(mb_state_t* mb_state, mb_setpoints_t* mb_setpoints);
 int mb_destroy_controller();
 float compensate(float command);
 float compensator;

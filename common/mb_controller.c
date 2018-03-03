@@ -80,47 +80,34 @@ int mb_load_controller_config(){
 *
 *******************************************************************************/
 
-int mb_controller_update(mb_state_t* mb_state){
+int mb_controller_update(mb_state_t* mb_state, mb_setpoints_t* mb_setpoints){
     //TODO: update your controller each timestep, called by 
     // the IMU interrupt function
-    // Sprite:
+    // Sprite:added mb_setpoints as one of the argument, fwd_velocity
 
+    // Sprite: initialize local variables
     float error, error_out, desired_alpha, output;
+
+    // Sprite: Added filter for xdot (moving average of 100)
     dpush_queue(mb_state->xdot);
     mb_state->xdot = daverage_queue();
-    error_out = 0.0 - mb_state->xdot;
 
+    // Sprite: Compute error for the outer loop
+    error_out = mb_setpoints->fwd_velocity - mb_state->xdot;
+
+    // Sprite: Compute input (desired-alpha) for the inner loop
     desired_alpha = PI - PID_Compute(out_pid, error_out);
 
+    // Sprite: Compute error for the inner loop
     error = desired_alpha - mb_state->alpha;
 
-    // Sprite: hard coded the upright position, will delete later
-    //desired_alpha = 3.12;
-
-    // if (desired_alpha < 0){
-    //     if (mb_state->alpha < 0){
-    //         error = desired_alpha - (mb_state->alpha);
-    //     }
-    //     else{
-    //         error = TWO_PI+desired_alpha - (mb_state->alpha); // in radian
-    //     }
-    // }
-    // else{
-    //     if (mb_state->alpha < 0){
-    //         error = desired_alpha - TWO_PI - (mb_state->alpha);
-    //     }
-    //     else{
-    //         error = desired_alpha - (mb_state->alpha); // in radian
-    //     }
-    // }
-
-   
+    // Sprite: Compute PID output for the motor
     output = compensate(PID_Compute(in_pid, error));
     mb_state->right_cmd = ((float) ENC_1_POL)*SPEED_RATIO*output;
     mb_state->left_cmd = ((float) ENC_2_POL)*output;
     
 
-    // Sprite: for debugging purposes
+    // Sprite: for debugging purposes, PID terms for the inner loop
     mb_state->right_pid_p = in_pid->pTerm;
     mb_state->left_pid_p = in_pid->pTerm;
     mb_state->right_pid_i = in_pid->iTerm;
@@ -173,7 +160,8 @@ int mb_destroy_controller(){
 
 void dpush_queue(float value)
 {
-    for(int i = 0; i<dqueue_length-1;i++)
+    int i = 0;
+    for(i = 0; i<dqueue_length-1;i++)
         {
             dfilter_queue[i]= dfilter_queue[i+1];
         }
@@ -181,8 +169,9 @@ void dpush_queue(float value)
 }
 void dintialize_queue(float value)
 {
+    int i = 0;
     dfilter_queue[0] = value;
-    for(int i = 0; i<dqueue_length-1;i++)
+    for(i = 0; i<dqueue_length-1;i++)
         {
             dfilter_queue[i+1]= dfilter_queue[i];
         }
@@ -191,7 +180,8 @@ void dintialize_queue(float value)
 float daverage_queue()
 {
     float sum = 0;
-    for (int i = 0; i < dqueue_length; ++i)
+    int i = 0;
+    for (i = 0; i < dqueue_length; ++i)
     {
         sum += dfilter_queue[i];
     }
