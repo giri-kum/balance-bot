@@ -1,5 +1,8 @@
 #ifndef MB_STRUCTS_H
 #define MB_STRUCTS_H
+#include "../lcmtypes/balancebot_gate_t.h"
+#include "../lcmtypes/pose_xyt_t.h"
+#include "../lcmtypes/balancebot_msg_t.h"
 
 typedef struct mb_state mb_state_t;
 struct mb_state{
@@ -12,6 +15,12 @@ struct mb_state{
     //outputs
     float   left_cmd;  //left wheel command [-1..1]
     float   right_cmd; //right wheel command [-1..1]
+
+    balancebot_msg_t* bb_msg;
+    float   opti_x;
+    float   opti_y;
+    float   opti_theta;
+
 
     //TODO: Add more variables to this state as needed
 };

@@ -12,7 +12,7 @@
 #include "../lcmtypes/pose_xyt_t.h"
 #include "../balancebot/balancebot.h"
 
-#define     LCM_HZ              1000
+#define     LCM_HZ              100
 #define     PRINTF_HZ           10
 #define     OPTITRACK_CHANNEL   "OPTITRACK_CHANNEL"
 
