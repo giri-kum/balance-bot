@@ -126,12 +126,12 @@ int main(int argc, char** argv)
                 pose_xyt_t Pose;
                 Pose.utime = utime_now();
                 Pose.x = msg.x;
-                Pose.y = msg.z;
+                Pose.y = -msg.z; //optitrack z is world -y
                 double roll;
                 double pitch;
                 double yaw;
                 toEulerAngle(msg, roll, pitch, yaw);
-                Pose.theta = pitch;
+                Pose.theta = yaw;
                 BBmsg.pose = Pose;
             }            
         }

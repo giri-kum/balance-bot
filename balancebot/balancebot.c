@@ -40,8 +40,12 @@ int main(){
 	pthread_create(&setpoint_control_thread, NULL, setpoint_control_loop, (void*) NULL);
 
 
-	// TODO: start motion capture message recieve thread
-
+	// start lcm handle thread
+	printf("starting lcm thread... \n");
+	lcm = lcm_create(NULL);
+	pthread_t lcm_subscribe_thread;
+    pthread_create(&lcm_subscribe_thread, NULL, lcm_subscribe_loop, (void*) NULL);
+	
 	// set up IMU configuration
 	printf("initializing imu... \n");
 	rc_imu_config_t imu_config = rc_default_imu_config();
@@ -235,6 +239,54 @@ void* setpoint_control_loop(void* ptr){
 	}
 }
 
+/*******************************************************************************
+*  optitrack_message_handler()
+*
+*  handler function for optitrack driver messages
+*  optitrack_driver must be running and optitrack must be set up
+*
+*******************************************************************************/
+void optitrack_message_handler(const lcm_recv_buf_t* rbuf,
+                                const char* channel,
+                                const balancebot_msg_t* msg,
+                                void* userdata){
+
+    // lock the state mutex
+    pthread_mutex_lock(&state_mutex);
+    mb_state.bb_msg = balancebot_msg_t_copy(msg);
+
+    // copy the data from the message to the state
+    mb_state.opti_x = mb_state.bb_msg->pose.x;
+    mb_state.opti_y = mb_state.bb_msg->pose.y;
+    mb_state.opti_theta = mb_state.bb_msg->pose.theta;
+
+
+    pthread_mutex_unlock(&state_mutex);
+}
+
+/*******************************************************************************
+* lcm_subscribe_loop() 
+*
+* thread subscribes to lcm channels and sets handler functions
+* then handles lcm messages in a non-blocking fashion
+*
+* TODO: Add other subscriptions as needed
+*******************************************************************************/
+void *lcm_subscribe_loop(void *data){
+
+    balancebot_msg_t_subscribe(lcm,
+                         OPTITRACK_CHANNEL,
+                         optitrack_message_handler,
+                         NULL);
+
+    while(1){
+        // define a timeout (for erroring out) and the delay time
+        lcm_handle_timeout(lcm, 1);
+        usleep(1000000 / LCM_HZ);
+    }
+    lcm_destroy(lcm);
+    return 0;
+}
 
 
 
@@ -256,7 +308,7 @@ void* printf_loop(void* ptr){
 		// check if this is the first time since being paused
 		if(new_state==RUNNING && last_state!=RUNNING){
 			printf("\nRUNNING: Hold upright to balance.\n");
-			printf("                 SENSORS               |           ODOMETRY          |");
+			printf("                 SENSORS               |           OPTITRAK          |");
 			printf("\n");
 			printf("    α    |");
 			printf("    θ    |");
@@ -267,9 +319,9 @@ void* printf_loop(void* ptr){
 			printf("    X    |");
 			printf("    Y    |");
 			printf("    θ    |");
-			printf("  error  |");
-			printf("  in_P   |");
-			printf("  out_P  |");
+			printf(" opti_X  |");
+			printf(" opti_Y  |");
+			printf(" opti_θ    |");
 			printf("positionP|");
 			printf("heading_P|");
 			printf("error_P  |");
@@ -307,6 +359,7 @@ void* printf_loop(void* ptr){
 		if(new_state == RUNNING){
 			
 			printf("\r");
+
 			//Add Print statements here, do not follow with /n
 			printf("%7.3f  |", mb_state.alpha);
 			printf("%7.3f  |", mb_state.imu_theta);
@@ -317,15 +370,17 @@ void* printf_loop(void* ptr){
 			printf("%7.3f  |", mb_odometry.x);
 			printf("%7.3f  |", mb_odometry.y);
 			printf("%7.3f  |", mb_odometry.theta);
-			printf("%7.3f  |", mb_state.error);
-			printf("%7.3f  |", mb_state.in_pid_p);
-			printf("%7.3f  |", mb_state.out_pid_p);
+			printf("%7.3f  |", mb_state.opti_x);
+			printf("%7.3f  |", mb_state.opti_y);
+			printf("%7.3f  |", mb_state.opti_theta);
+
 			printf("%7.3f  |", mb_state.position_pid_p);
 			printf("%7.3f  |", mb_state.heading_pid_p);
 			printf("%7.3f  |", mb_state.error_position);
 			printf("%7.3f  |", mb_state.error_heading);
 			printf("%7.3f  |", mb_state.xdot);
 			printf("%7.3f  |", mb_state.desired_alpha);
+		//Add Print stattements here, do not follow with /n
 			fflush(stdout);
 			fprintf(f1, "%lf,", mb_state.alpha);
 			fprintf(f1, "%lf,", mb_state.imu_theta);
